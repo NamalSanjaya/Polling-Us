@@ -3,7 +3,7 @@ const { parse }  = require('querystring');
 const { readFileSync }    = require('fs');
 const { connectionDB }    = require('./db');
 const { CookieParser }  = require('./middleWare');
-
+const { data } = require('./test1')
 
 class eventBasic extends event{ }
 
@@ -23,7 +23,7 @@ class Basic extends CookieParser {
         this.register = "http://localhost:8000/home/register" ;
         this.my       = "http://localhost:8000/my" ;
 
-        this.QuesCnt = 0 ;
+        this.QuesCnt = 201 ;
         this.CurrentHandlers = {};
         this.schduleHandler = {} ;
 
@@ -53,15 +53,19 @@ class Basic extends CookieParser {
 
         let tempalte = readFileSync( Path );
         response.writeHead( 200 , {'Content-Type':'text/html'} );
-        response.end( tempalte );
+        response.end( tempalte ,() => {
+            console.log('render something........');
+        } );
         return ;
     
     }
 
     redirect( response , to ){
-        console.log(  'handler : ' , this.CurrentHandlers )
+        console.log( 'Is response has send : ' ,  response.finished )
         response.writeHead( 302 , {'Location' : to } );
-        response.end();
+        response.end( ()=> {
+            console.log('redirect something....')
+        });
         return ;
     }
     
@@ -79,13 +83,29 @@ class Basic extends CookieParser {
         let cookie = response.getHeader('set-cookie')[0];
         response.removeHeader('Set-Cookie');
 
-        response.setHeader( 'Set-Cookie', [ cookie.slice(0,29) + to + cookie.slice(30) ] )
+        response.setHeader( 'Set-Cookie', [ cookie.slice(0,29) + to + cookie.slice(30) ] );
+        return 
     }
     
     
     Register( request , response  ){
 
-        this.emitter.removeAllListeners( 'allow' , 'deny' );
+        //this.emitter.removeAllListeners( );
+
+        this.emitter.on('allowREG' , ()=> {
+            // -------->
+           ///send mail and store the data in a temperay User table
+           // after the email verification put them in MainUser table
+           this.redirect( response , this.home );
+
+       
+       })
+   
+       this.emitter.on('denyREG' , ()=> {
+           //ask to enter the email again
+           this.redirect( response ,  this.register );
+       })
+
         let text = '' ;
     
         request.on( 'data' , (data)=> {
@@ -102,29 +122,42 @@ class Basic extends CookieParser {
             }
     
             this.dbPool.checkEmail( Info[ this.regTags.email ] , this.emitter);
-        
+            return ;
         })
     
-        this.emitter.on('allow' , ()=> {
-             // -------->
-            ///send mail and store the data in a temperay User table
-            // after the email verification put them in MainUser table
-            this.redirect( response , this.home );
-
-        
-        })
-    
-        this.emitter.on('deny' , ()=> {
-            //ask to enter the email again
-            this.redirect( response ,  this.register );
-        })
-    
-    }
+}
 
 
     login_Auth( request , response ){
+        console.log('try to login');
 
-        this.emitter.removeAllListeners( 'allow' ,  'deny'  );  // to clear the emitter event object 
+       // this.emitter.removeAllListeners();
+
+        this.emitter.on( 'allowLOG' , ()=> {
+            // ------> display message
+            // allow to login - update the currentsession table
+            this.changeCookie( response , '1');
+            this.dbPool.addCurrentUser( request.session.SessionId , Info[ this.logInTags.email ] , this.emitter )
+        
+
+        })
+
+        this.emitter.on( 'denyLOG' , ()=> {
+            // --------> display message 
+            // ask again login informations -- put the error message
+            console.log('wrong login Info')
+            this.redirect( response , this.login );
+            return ;
+
+        });
+
+        this.emitter.on('addedLOG', ()=> {
+            console.log('you can login')
+            this.redirect( response , this.my  );
+            return ;
+        })
+
+
         let text = '' , Info ;
 
         request.on( 'data' , (chunk)=> {
@@ -136,28 +169,10 @@ class Basic extends CookieParser {
             Info = parse( text );
 
             this.dbPool.isAuthUser( Info[ this.logInTags.email ] , Info[ this.logInTags.password ] , this.emitter );
-            
+            return ;
         })
 
-        this.emitter.on( 'allow' , ()=> {
-            // ------> display message
-            // allow to login - update the currentsession table
-            this.changeCookie( response , '1');
-            this.dbPool.addCurrentUser( request.session.SessionId , Info[ this.logInTags.email ] , this.emitter )
-        
-
-        })
-
-        this.emitter.on( 'deny' , ()=> {
-            // --------> display message 
-            // ask again login informations -- put the error message
-            this.redirect( response , this.login );
-
-        });
-
-        this.emitter.on('added', ()=> {
-            this.redirect( response , this.my  );
-        })
+        return ;
 
     }
 
@@ -165,6 +180,7 @@ class Basic extends CookieParser {
     
         console.log( 'times out fired ....current hander removed : ', queNo  );
         delete handler[queNo];
+        return ;
 
     }
 
@@ -176,74 +192,73 @@ class Basic extends CookieParser {
 
         if( startTime <= now ){
             // poll start 
-            console.log('poll start')
-             this.CurrentHandlers[ QuesNo ] = setTimeout( this._pollTimeOut , timediff , this.CurrentHandlers   , QuesNo )
+            console.log('poll start : ', QuesNo )
+             this.CurrentHandlers[ QuesNo ] = setTimeout( this._pollTimeOut , timediff , this.CurrentHandlers   , QuesNo );
+             return ;
         }
-        else{
+    
 
-            // schdule it for later
-            let timeout = ( startTime - now )*60000 ;
-            console.log('schdule for future : ' , timeout );
+        // schdule it for later
+        let timeout = ( startTime - now )*60000 ;
+        console.log('schdule for future : ' ,  QuesNo);
 
-            this.schduleHandler[ QuesNo ] = setTimeout( () => {
+        this.schduleHandler[ QuesNo ] = setTimeout( () => {
 
-                // take over the time handler to the currenthandler
-                this.emitter.emit( 'change' , timediff , QuesNo ) ;
+            // take over the time handler to the currenthandler
+            this.emitter.emit( 'changeCRE_POLL' , timediff , QuesNo ) ;
 
-            }, timeout );
-            
-        }
+        }, timeout );
+
+        return ;    
+        
     }
 
     create_poll( request , response ){
 
-        let quesNo = 118 ;
-        this.emitter.removeAllListeners( 'done' , 'change' ); 
+        //this.emitter.removeAllListeners( ); 
+        this.emitter.on( 'doneCRE_POLL' , ()=> {
 
-        let data = { 
-            "ques"        : `your hobbies?` ,
-            "ans"         : [ `cricket` , `movies` ] ,
-            "settings"    : { startTime: 12547 , endTime: 12549 , multipleChoicesAllow: 1 } 
-        }
-
-        this.dbPool.addPoll( request.session.SessionId , quesNo , data , this.emitter );
-
-        this.emitter.on( 'done' , ()=> {
-
-            this._assignHandler( data.settings.startTime , data.settings.endTime , quesNo )
+            this._assignHandler( dataEch.settings.startTime , dataEch.settings.endTime , quesNo );
             this.redirect( response , this.my );
 
         })
 
-        this.emitter.on('error' , ()=> {
+        this.emitter.on('errorCRE_POLL' , ()=> {
+         
             this.render( response ,  './templates/HTML/error.html' );
         })
 
-        this.emitter.on( 'change', ( tmDiff , quesNo)=>{
-
+        this.emitter.on( 'changeCRE_POLL', ( tmDiff , quesNo)=>{
+      
             delete this.schduleHandler[ quesNo ] ;
             this.CurrentHandlers[ quesNo ]   = setTimeout( this._pollTimeOut , tmDiff , this.CurrentHandlers , quesNo );
-            console.log('take over done.... and remove schdule handler');
+            console.log('take over done.... and remove schdule handler : ' , quesNo );
 
         })
+
+        let quesNo = this.QuesCnt ;
+        let dataEch = data.pop();
+        this.QuesCnt++ ;
+        this.dbPool.addPoll( request.session.SessionId , quesNo , dataEch , this.emitter );
+        return ;
 
     }
 
     arrageMyPage( request , response ){
         
-        this.emitter.removeAllListeners( 'pageNOTfound' , 'pgReady'); 
-
-        this.dbPool.bringDataToShow( request.session.SessionId , this.emitter );
+        //this.emitter.removeAllListeners( 'pageNOTfound' , 'pgReady' ); 
 
         this.emitter.on('pageNOTfound' , ()=> {
-            console.log('error Occuried..');
             this.render( response , './templates/HTML/error.html' )
         });
 
         this.emitter.on( 'pgReady' , ( data )=> {
-            console.log( data );
             this.render( response , './templates/HTML/my.html' );
+
         });
+
+        this.dbPool.bringDataToShow( request.session.SessionId , this.emitter );
+        return ;
 
     }
 
@@ -259,6 +274,7 @@ class Basic extends CookieParser {
     }
 
 }
+
 
 
 module.exports = { Basic  }

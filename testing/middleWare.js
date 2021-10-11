@@ -29,7 +29,7 @@ class CookieParser{
     }
 
     _createCookie( session , mul ){
-        let now = new Date( Date.now()  +  36e5*mul );
+        let now = new Date( Date.now()  +  60000*mul );
         let time = '; Expires=' + now.toUTCString() ;
         return 'SessionId='.concat( session.SessionId , '&AuthUser=', session.AuthUser.toString() ,time , '; Path=/' )
     }
@@ -52,7 +52,7 @@ class MiddleWare extends CookieParser{
         if( ind >= 0){
             // authenticated user
             request.session = this._extracCookie( cke , ind );
-            timeMul = 4 ;
+            timeMul = 1 ;
         }
 
         else{

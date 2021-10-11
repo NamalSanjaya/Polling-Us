@@ -31,20 +31,20 @@ class connectionDB{
             
                 
             this.connection.query( query2 , [ mail , passwd ] , (err,result,fields) => {
-                 
+            
 
                     if(err){
-                        EventEmitter.emit('deny');
+                 
+                        EventEmitter.emit('denyLOG');
                         return ;
                     }
 
                     if( result.length ){
-
-                            EventEmitter.emit('allow');
+                            EventEmitter.emit('allowLOG');
                             return ;
                     }
-
-                    EventEmitter.emit('deny');
+                   
+                    EventEmitter.emit('denyLOG');
                     return ;
 
             })
@@ -59,17 +59,18 @@ class connectionDB{
         this.connection.query( query , [ mail ] , (err,result,fields) => {
             
             if(err){
-                
-                EventEmitter.emit('deny');
+              
+                EventEmitter.emit('denyREG');
                 return ;
             }
 
             if( result.length ){
-                EventEmitter.emit('deny');
+         
+                EventEmitter.emit('denyREG');
                 return ;
             }
-            
-            EventEmitter.emit( 'allow' );
+        
+            EventEmitter.emit( 'allowREG' );
             return ;
         
         })
@@ -84,7 +85,7 @@ class connectionDB{
 
         this.connection.query( query , [ Id , mail , start  ] , (err,result,fields) => {
                 console.log('Added to current session');
-                EventEmitter.emit('added');
+                EventEmitter.emit('addedLOG');
         });
     } 
 
@@ -120,7 +121,8 @@ class connectionDB{
         this.connection.query( query1 , [ Id ] , (err,result,fields) => {
           
                 if( err ){
-                    emitter.emit('error');
+                 
+                    emitter.emit('errorCRE_POLL');
                     return ;
                 }
 
@@ -129,7 +131,8 @@ class connectionDB{
                 this.connection.query( query2 , [ quesNo , ques , mail , settings.startTime , settings.endTime , settings.multipleChoicesAllow , state ] , (err,result,fields)=> {
 
                     if( err ){
-                         emitter.emit('error');
+                       
+                         emitter.emit('errorCRE_POLL');
                          return ;
                     }
 
@@ -138,14 +141,15 @@ class connectionDB{
                         this.connection.query( query3 , [ eachAns , quesNo , 0 ] , (err,result,fields)=> {
 
                             if( err ){
-                                 emitter.emit('error');
+                            
+                                 emitter.emit('errorCRE_POLL');
                             }
                             cnt++ ;
                             console.log( `DONE:: ${eachAns} ${cnt}`);
 
                             if(cnt == answerArray.length ){
-                                console.log('poll add to db')
-                                emitter.emit('done');
+                                console.log('poll add to db');
+                                emitter.emit('doneCRE_POLL');
                             }
                             
                         })
@@ -212,12 +216,13 @@ class connectionDB{
         this.connection.query( query1 , [ Id ] , (err,result,field) => {
           
             if( err || result.length == 0 ){
-                console.log('no such a mail exist..');
+            
                 EventEmitter.emit('pageNOTfound');
                 return ;
             }
 
             if( result.length >= 2 ){
+            
                 EventEmitter.emit('pageNOTfound', 'Unexpected error Occuried');
                 return 
             }
@@ -227,10 +232,12 @@ class connectionDB{
           
             this.connection.query( query2 , [ mail ] , (err , result , field )=> {
                 if( err ){
+                
                     EventEmitter.emit('pageNOTfound');
                 }
             
                 let output = this._prepareResult( result ); 
+        
                 EventEmitter.emit('pgReady' , output );
                 return ;
     

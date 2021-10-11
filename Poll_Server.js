@@ -16,12 +16,12 @@ const server = http.createServer( (req,res) => {
     if( pathname == '/favicon.ico' ){ return ; }
 
     middleware.session( req , res );
-
     console.log(  req.headers.cookie ,  req.session );
+
     if( method =='GET'){
 
         if( pathname == '/home'){
-     
+          
             basic.render( res , './templates/HTML/home.html' );
             return
 
@@ -45,7 +45,7 @@ const server = http.createServer( (req,res) => {
                 basic.render( res , './templates/HTML/login.html' );
                 return ;
             }
-
+        
             basic.redirect( res , basic.my )
             return ;
 
@@ -80,6 +80,7 @@ const server = http.createServer( (req,res) => {
             }
 
             basic.redirect( res , basic.home );
+            return 
         }
 
         else if( pathname == '/my/create-poll'){
@@ -100,34 +101,15 @@ const server = http.createServer( (req,res) => {
         if( pathname == '/home/register' ){
 
             basic.Register( req , res  );
+            return 
            
         }
 
         else if( pathname == '/my'){
-
+    
             basic.login_Auth( req , res );
+            return 
 
-        }
-
-        else if( pathname == '/reset'){
-
-            let ps ;
-            req.on('data', (dt)=>{
-                ps = qs.parse( dt.toString() );
-            })
-
-            req.on('end' , ()=> {
-
-                if( ps.pswd == 'down'){
-
-                    res.end('shutDown');
-                    server.close();
-                    return
-
-                }
-                res.end('attempt failied...');
-                return 
-            })
         }
     }
     
@@ -141,11 +123,5 @@ const server = http.createServer( (req,res) => {
 
 server.listen( 8000 , ()=> console.log('Listening....') )
 
-server.on('close' , ()=> {
-
-    console.log('server is closed');
-    basic.connection.end();
-    
-})
 
 
