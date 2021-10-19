@@ -1,7 +1,4 @@
 package-lock.json
 node_modules/
-test1.js
-test2.js
-
-model.js
+testing/
 templates/
