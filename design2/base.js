@@ -23,8 +23,8 @@ function _createId(){
     // length 9 id
     let ref = new Date('2021-10-01T00:00:00')  ;
     let datePart = ( Date.now() - ref ).toString() ;
-    let id1 = datePart.slice(4).padEnd( 6 , datePart[0] ) ;
-    let id2 =  Math.floor( Math.random() * 1e3 ).toString()
+    let id1 = datePart.slice(5).padEnd( 5 , datePart[0] ) ;
+    let id2 = ( Math.random() * 1e5 ).toString().slice(0,4);
    
     return id1 + id2 ;
 
@@ -69,7 +69,6 @@ function attachBody( request , option = null){
     request.on('data' , (chunk) => {
         data += chunk.toString() ;
         request.body = parse( data );
-        console.log( request.body )
         return ;
     })
 }
@@ -88,7 +87,7 @@ function render(  response  , path   , data , statusCode = 200 ){
 
 /// page redirect
 function redirect( response , to , data  , statusCode = 302 ){
-  
+    
     response.writeHead( statusCode , {'Location' : to } );
     response.end();
     return ;
@@ -96,7 +95,7 @@ function redirect( response , to , data  , statusCode = 302 ){
 
 
 
-// ================= registering =============================  //
+// ================= registering | login | logout =============================  //
 
 function register(  rHandler , db , request , response ){
 
@@ -109,10 +108,10 @@ function register(  rHandler , db , request , response ){
 }
 
 
-function login( lHander , db , request , response ){
+function login( lHandler , db , request , response ){
 
     request.on('end' , ()=> {
-        db.checkCredentials( request.body , lHander , request , response );
+        db.checkCredentials( request.body , lHandler , request , response );
         return ;
     })
 
@@ -121,8 +120,69 @@ function login( lHander , db , request , response ){
 }
 
 
+function logout(lHandler , db , request , response ){
 
-// ================ addtional =============================== // 
+    db.removeLoggedUser( request.session.SessionId , lHandler , request , response );
+    response.removeHeader('Set-Cookie');
+    response.setHeader( 'Set-Cookie', [ _createCookie(  request.session , 0 ) ] ) ;
+    return ;
+}
+
+// =================== poll creation ======================= //
+
+
+function create_poll( pHandler , db , request , response ){
+
+    request.on( 'end' , ()=> {
+        db.addPoll( request.body , pHandler , request , response );
+    })
+
+    return ;
+}
+
+function _expiredPoll( qno , _pHandler){
+
+    _pHandler.emit( 'done-expiredpoll' , qno );
+    return ;
+
+}
+
+function _handOver( qno , stime, etime , LiveBg , SchBg , pHandler ){
+
+    let tm1 = (etime-stime)*60000 ;
+    delete SchBg[qno] ;
+    LiveBg[qno] = setTimeout( _expiredPoll ,tm1 , qno , pHandler);
+    console.log(`poll handover ${ qno }`);
+    return ;
+
+}
+
+
+function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
+    
+    if(sTime <= nw ){
+        // poll start now
+        let timeout1 = (eTime - sTime)*60000 ;
+        console.log(`poll start .... ${ qno }`);
+
+        Lbag[ qno ] = setTimeout( _expiredPoll , timeout1 , qno , pHandler );
+
+    }
+
+    else{
+        //poll schdule for future 
+        let timeout2 = (sTime - nw)*60000 ;
+        console.log(`poll schdule for future ${ qno }`);
+
+        Sbag[ qno ] = setTimeout( _handOver , timeout2 , qno , sTime , eTime , Lbag , Sbag , pHandler );
+    }
+
+    return ;
+}
+
+
+
+// ===================== additional =============================== // 
 
 function timeNow(){
 
@@ -141,5 +201,5 @@ function changeCookie( response ,to){
 
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,
-                   changeCookie }
+                   changeCookie , create_poll , assignBag , logout }
 

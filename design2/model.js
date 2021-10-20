@@ -21,7 +21,9 @@ class Connection_DB{
         }); 
 
         this.reg = { name: 'Uname' , email:'Uemail' , password:'Upassword' }
-        this.log = { email:'MYmail' , password:'MYpasswd'}
+        this.log = { email:'MYmail' , password:'MYpasswd'} ;
+        this.pollc = { Qno:'QuestionNo' , Ques:'Question' , email:'Email' , stTime:'startTime' , 
+                    eTime:'endTime' , multi: 'multipleChoices' , st:'State' }
 
     }
 
@@ -139,20 +141,22 @@ class Connection_DB{
         
         let query = `insert into currentsessions values ( ? , ? , ? )` ;
         let now = timeNow();
-        console.log(  request.session.SessionId  , data[ this.log.email ]  , now  )
+
         this.connection.query( query , [ request.session.SessionId  , data[ this.log.email ]  , now  ] , (err,result,fields) => {
                 if(err){
                     // redirect to server error page
-                    console.log('!! server error- __addCurrentUser');
+                    console.log('!! server error-__addCurrentUser, ' , request.session.SessionId );
                     return ;
                 }
 
                 else{
                     console.log('current user added..')
-                    lHandler.emit('done-log' , null , request , response);
+                    lHandler.emit('done-login' , null , request , response);
                     return ;
                 }
         });
+
+        return ;
     }
 
     _removeExistingUsers(  data , lHandler , request , response ){
@@ -173,6 +177,8 @@ class Connection_DB{
 
         })
 
+        return ;
+
     }
 
     checkCredentials( data , lHandler , request , response ){
@@ -189,7 +195,7 @@ class Connection_DB{
             else if( result.length == 0 ){
 
                 let msg = 'wrong Email or Password';
-                lHandler.emit('done-log' , msg , request , response );
+                lHandler.emit('done-login' , msg , request , response );
                 return;
             }
 
@@ -198,7 +204,52 @@ class Connection_DB{
                 return ;
             }
 
-        })
+        });
+
+        return ;
+    }
+
+
+    addPoll( data , pHandler , request , response ){
+        let query = `insert into questions 
+                    values(?,?,?,?,?,?,?)` ;
+
+        this.connection.query(query,[ data[this.pollc.Qno] , data[this.pollc.Ques] , data[this.pollc.email]  , data[this.pollc.stTime] ,
+                                      data[this.pollc.eTime] , data[this.pollc.multi], data[this.pollc.st ] ] , (err,result,fields)=> {
+
+                if( err ){
+                    // server error
+                    console.log('!! server error-addPoll');
+                    return ;
+                }
+
+                else{
+                    pHandler.emit('done-addpoll' , null , request , response );
+                    return ;
+                }
+
+         });
+         return ;
+    }
+
+
+    removeLoggedUser( Id , lHandler , request , response ){
+        let query = `delete from currentsessions where sessionId = ? ` ;
+
+        this.connection.query( query , [ Id ] , (err,result,fields)=> {
+            if(err){
+                //server error 
+                console.log('server error-removeLoggedUser');
+            }
+            else{
+                console.log(`session End ${ Id }`)
+                lHandler.emit('done-logout' , null , request , response);
+            }
+
+            return ;
+        });
+
+        return ;
     }
 
 }

@@ -21,3 +21,5 @@ register event handler status {
     reg1 - after checkmail()
     reg2 - after userInsert()
 }
+
+* all time are in nearest minute

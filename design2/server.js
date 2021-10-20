@@ -6,10 +6,10 @@ const http = require('http');
 const { Manager } = require('./Manage') ;
 const { Connection_DB }  = require('./model');
 
-const { register , login , render, redirect ,
-                                 changeCookie } = require('./base');
+const { register , login , render, redirect , logout ,
+        create_poll , assignBag , changeCookie, timeNow } = require('./base');
 
-
+const { GetTestData } = require('./designtest1')
 
 /// server call
 let Admin = new Manager() ;
@@ -74,10 +74,11 @@ Admin.get( path.my , (req,res)=> {
 Admin.get( path.logout , (req,res)=> {
 
     if( req.session.AuthUser == 1){
-        changeCookie( res , 0 );
+       logout( LgHandler , DBadmin , req , res );
     }
-
-    redirect( res , path.home )
+   else{
+       redirect( res , path.home );
+   }
     
     return ;
 
@@ -130,6 +131,7 @@ Admin.post( path.login , ( req , res )=> {
 Admin.post( path.createpoll , (req , res )=> {
 
     if( req.session.AuthUser == 1){
+        req.body = GetTestData();  // testing line
         create_poll( PollHandler , DBadmin, req , res );
     }
 
@@ -165,30 +167,57 @@ RegHandler.on( 'allow-reg1' , (err , request , response )=> {
     if(err){
         redirect(response, path.home );
     }
-
     else{
         /// send email and add to pending uset table
         DBadmin.addPendingUser( request.body , RegHandler , request , response);
     }
-
     return ;
 })
 
 
-LgHandler.on('done-log' , (err , request , response ) => {
+LgHandler.on('done-login' , (err , request , response ) => {
 
     if(err){
         redirect( response, path.login);
     }
-
     else{
-
         changeCookie( response , 1 );
         redirect( response, path.my );
     }
-
     return ;
 })
+
+LgHandler.on('done-logout' , (err, request , response)=> {
+
+    redirect( response , path.home );
+    return ;
+})
+
+
+PollHandler.on( 'done-addpoll', (err,request,response)=> {
+
+    if(err){
+        redirect( response , path.my);
+    }
+    else{
+        let stTime = request.body[ DBadmin.pollc.stTime ] ;
+        let eTime  = request.body[ DBadmin.pollc.eTime ] ;
+        let now = timeNow() ;
+        let Qno = request.body[ DBadmin.pollc.Qno ] ;
+        assignBag(stTime,eTime,now,Qno, Admin.liveBag , Admin.schduleBag , PollHandler ) ;
+        response.end('Wait');
+    }
+    return ;
+})
+
+
+PollHandler.on( 'done-expiredpoll' , ( Qno )=> {
+
+    console.log(`poll fired Over...${ Qno }`);
+    return ;
+
+})
+
 
 
 // ====================  main function ====================== //
