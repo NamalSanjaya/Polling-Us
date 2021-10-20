@@ -209,6 +209,36 @@ class Connection_DB{
         return ;
     }
 
+    // data -> array
+    _addAnswers( data , Qno , pHandler , request , response ){
+        let query = `insert into answers
+                     values(?,?,?)` ;
+        let len = data.length ;
+        let cnt = 0;
+        for( let ans of data){
+            
+            this.connection.query( query , [ans, Qno, 0] , (err,result,fields)=> {
+                if(err){
+                    //server error
+                    console.log('server error-_addAnswers')
+                }
+                else{
+                    console.log(`${ ans } : ${Qno}`)
+                    cnt++ ;
+                }
+  
+                if( len == cnt){
+                    console.log(`poll added completed : ${ Qno }`)
+                    pHandler.emit('done-addpoll' , null , request , response );
+                    return ;
+                }
+
+            });
+        }
+
+        return ;
+    }
+
 
     addPoll( data , pHandler , request , response ){
         let query = `insert into questions 
@@ -224,7 +254,7 @@ class Connection_DB{
                 }
 
                 else{
-                    pHandler.emit('done-addpoll' , null , request , response );
+                    this._addAnswers(data.Answers , data[this.pollc.Qno]  , pHandler , request , response);
                     return ;
                 }
 
