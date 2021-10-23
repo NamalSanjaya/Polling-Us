@@ -2,8 +2,11 @@
 "use strict";
 
 // node modules
-const { readFileSync } = require('fs');
 const { parse } = require('querystring');
+const Urls = require('url') ;
+
+// npm dependencies
+const ejs = require('ejs');
 
 
 //   ================= middleware ==================== //
@@ -44,11 +47,11 @@ function session( request , response ){
     let cke , ind , timeMul;
     cke = request.headers.cookie  || '';
     ind = cke.search(/SessionId=/) ;
-
+  
     if( ind >= 0){
         // authenticated user
         request.session = _extracCookie( cke , ind );
-        timeMul = 1 ;
+        timeMul = 4 ;
     }
 
     else{
@@ -73,20 +76,52 @@ function attachBody( request , option = null){
     })
 }
 
+function voteSeperation( request , response ){
+    let _pathname = request.url ;
+    let Ind = _pathname.search(/^\/vote/);
+    request.headers.cookie = request.headers.cookie  || '' ; 
+
+    if( Ind == 0 ){
+    
+        let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
+        let _id    = UrlObj.searchParams.get('id') || '';
+
+        let SInd =  request.headers.cookie.search(/SessionId=/);
+        request.url = UrlObj.pathname ;
+        request.query = { id: _id } ;
+  
+        if( SInd == -1){
+            request.voteId = request.headers.cookie.trim() ; ;
+            request.headers.cookie = '';
+        }
+        else{
+
+            request.voteId = request.headers.cookie.slice(0,SInd-2).trim() ;
+            request.headers.cookie = request.headers.cookie.slice(SInd,SInd+30) ;
+        }
+
+    }
+
+    return ;
+}
 
 // ================== template rendering associate function ====================== //
 
 // page rendering 
-function render(  response  , path   , data , statusCode = 200 ){
+function render(  response  , path   , _data='' , statusCode = 200 ){
+    
+    ejs.renderFile( path , { data: _data } , (err , page)=> {
 
-    let pg = readFileSync( path );
-    response.writeHead( statusCode , {'Content-Type':'text/html'} );
-    response.end( pg ) ;
+        response.writeHead( statusCode , {'Content-Type':'text/html'} );
+        response.end( page );
+
+    }) ;
+ 
     return ;
 }   
 
 /// page redirect
-function redirect( response , to , data  , statusCode = 302 ){
+function redirect( response , to , _data={}  , statusCode = 302 ){
     
     response.writeHead( statusCode , {'Location' : to } );
     response.end();
@@ -126,6 +161,13 @@ function logout(lHandler , db , request , response ){
     response.removeHeader('Set-Cookie');
     response.setHeader( 'Set-Cookie', [ _createCookie(  request.session , 0 ) ] ) ;
     return ;
+}
+
+function retrieveMY(prHandler , db , request , response ){
+
+    db.retrievePoll( request.session.SessionId , prHandler , request , response ) ;
+    return ;
+
 }
 
 // =================== poll creation ======================= //
@@ -180,6 +222,30 @@ function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
     return ;
 }
 
+// ======================= vote =========================== //
+
+function isEligible(request,response){
+    let qnoId = request.query;
+    let cookieId = request.voteId ;
+    let hr = 60; // 1 hr life time
+    
+    if( qnoId.id.length == 0 ){
+        return false ;
+    }
+
+    else if( qnoId.id == cookieId){
+        return false ;
+    }
+    else{
+        let now = new Date( Date.now()  +  60000* hr);
+        let time = '; Expires=' + now.toUTCString() ;
+
+        let cookie =  qnoId.id.concat( time , '; Path=/vote' )
+        response.setHeader( 'Set-Cookie', [ cookie ] ) ;
+        return true ;
+    }
+    
+}
 
 
 // ===================== additional =============================== // 
@@ -199,7 +265,50 @@ function changeCookie( response ,to){
     return 
 }
 
+function arrangeData( arr ){
 
-module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,
-                   changeCookie , create_poll , assignBag , logout }
+    let qno = 0 , turn = 0 , sm = 0;
+    let temp = {}
+    let tempAns = []
+    let whole = []
+
+    for(let tup of arr){
+    
+        if( tup.QuestionNo != qno){
+
+            if( turn != 0 ) {
+            
+                temp.Answers = tempAns ;
+                temp.Votes = sm ;
+                whole.push( temp );
+
+                temp = {} ; tempAns = [] ; sm = 0;
+
+            } 
+            qno =  tup.QuestionNo ;
+            temp.QuestionNo = tup.QuestionNo ;
+            temp.Question   = tup.Question ;
+            temp.Email      = tup.Email ; 
+            temp.startTime  = tup.startTime;
+            temp.endTime    = tup.endTime ;
+            temp.multipleChoices = tup.multipleChoices ;
+            temp.State      = tup.State ;
+            turn++
+        } 
+
+        tempAns.push( { AnswerNo: tup.AnswerNo , Answer: tup.Answer  , Ans_Count: tup.Ans_Count } )
+        sm += tup.Ans_Count ;
+    }
+
+    temp.Answers = tempAns ;
+    temp.Votes = sm ;
+    whole.push( temp );
+
+    return JSON.stringify( whole )
+
+}
+
+
+module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,
+                   changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation }
 

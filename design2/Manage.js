@@ -4,7 +4,7 @@ const events = require('events');
 
 // custom modules 
 const { Router } = require('./route');
-const { session , attachBody }  = require('./base')
+const {voteSeperation , session , attachBody }  = require('./base')
 
 
 class Manager extends Router{
@@ -15,9 +15,10 @@ class Manager extends Router{
         this.handlers = {
             RegHandler : new events() ,
             LgHandler   : new events() ,
-            PollHandler : new events() 
+            PollHandler : new events() ,    // to write
+            PollReader  : new events()      // to read
         } ;
-        this.mdwBag = [ session , attachBody ] ;
+        this.mdwBag = [ voteSeperation , session , attachBody ] ;
 
         this.liveBag = { } ;
         this.schduleBag = { } ;
@@ -39,6 +40,10 @@ class Manager extends Router{
     
     PollHandler(){
         return this.handlers.PollHandler ;
+    }
+
+    PollReader(){
+        return this.handlers.PollReader ;
     }
 
     Execute_MiddleWare( request , response ){

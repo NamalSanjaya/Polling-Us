@@ -254,7 +254,7 @@ class Connection_DB{
                 }
 
                 else{
-                    this._addAnswers(data.Answers , data[this.pollc.Qno]  , pHandler , request , response);
+                    this._addAnswers( data.Answers , data[this.pollc.Qno]  , pHandler , request , response);
                     return ;
                 }
 
@@ -280,6 +280,30 @@ class Connection_DB{
         });
 
         return ;
+    }
+
+
+    retrievePoll( Id , prHandler , request , response ){
+
+        let query = `select q.* , a.AnswerNo , a.Answer , a.Ans_Count
+                    from questions q
+                    inner join (
+                            select Email from currentsessions where SessionId = ?
+                    ) s on q.Email = s.Email 
+                    inner join answers a on a.QuestionNo = q.QuestionNo ` ;
+
+        this.connection.query( query , [ Id ] , (err,result , fields)=> {
+            if(err){
+                //server error 
+                console.log('server error- retrievePoll');
+            }
+
+            else{
+
+                prHandler.emit( 'done-retrievePollData' , null , result , request , response );
+                return ;
+            }
+        })
     }
 
 }

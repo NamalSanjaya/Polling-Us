@@ -1,5 +1,4 @@
 
-
 class URLname{
     constructor(path , cb){
         this.pathname = path ;
@@ -13,12 +12,28 @@ class Router{
 
         this.urlPattern = {
             home:'/home' , register:'/home/register' , login:'/home/login' , my:'/my' ,
-            logout:'/my/logout' , createpoll:'/my/create-poll'
+            logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view'
         }
        
         this.GET  = [  ];
-        this.POST = [  ] ;
+        this.POST = [  ];
+        this.CSSpaths = [ 'bar.css' ]
     }
+
+    _StaticFileExcute( request , response  , array , pattern ){
+        let reqUrl = request.url.replace(  pattern , '' );
+        request.url = reqUrl ;
+
+        for( let each of array){
+            if( each == reqUrl ){
+                this.GET[ this.GET.length - 1 ].callback.call(this ,request ,response)
+                return true;
+            }
+        }
+        return false ;
+    }
+
+
 
     _excute( request , response  , array ){
         let reqUrl = request.url ;
@@ -31,6 +46,16 @@ class Router{
         }
 
         return false ;
+    }
+
+    matchCSS( path , pattern){
+        let st = path.search( pattern ) ;
+    
+        if( st == 0){
+            return true ;
+        }
+        return false;
+    
     }
 
     get( path , cb){
@@ -50,7 +75,13 @@ class Router{
 
         let st;
         if( request.method == 'GET'){
-            st = this._excute( request , response , this.GET );
+            if( this.matchCSS( request.url , /^\/CSS\// ) ){
+                st = this._StaticFileExcute(request,response, this.CSSpaths ,/^\/CSS\// );
+            }
+            else{
+                st = this._excute( request , response , this.GET );
+            }
+
         }
 
         else if( request.method == 'POST' ){

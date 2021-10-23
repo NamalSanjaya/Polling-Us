@@ -1,13 +1,14 @@
 /// node modules
 const http = require('http');
+const { readFileSync } = require('fs');
 
 
 /// custom modules
 const { Manager } = require('./Manage') ;
 const { Connection_DB }  = require('./model');
 
-const { register , login , render, redirect , logout ,
-        create_poll , assignBag , changeCookie, timeNow } = require('./base');
+const { register , login , render, redirect , logout , retrieveMY ,isEligible,
+        create_poll , assignBag , changeCookie, timeNow , arrangeData } = require('./base');
 
 const { GetTestData } = require('./designtest1')
 
@@ -17,10 +18,11 @@ let DBadmin = new Connection_DB();
 let RegHandler = Admin.RegHandler() ;
 let LgHandler = Admin.LgHandler();
 let PollHandler = Admin.PollHandler() ;
+let PollReader = Admin.PollReader() ;
 let path = Admin.path() ;
 
 
-const server = http.createServer( main ).listen(8000 ,()=>console.log('listen...') );
+const server = http.createServer( main ).listen( 8000 , ()=>console.log('listen...') );
 
 
 // =======================  route - callback ================================= //
@@ -28,8 +30,7 @@ const server = http.createServer( main ).listen(8000 ,()=>console.log('listen...
 /* GET request */
 Admin.get( path.home , ( req , res )=> {
 
-    console.log( req.session );
-    render( res ,  '../templates/HTML/home.html'  );
+    render( res ,  '../templates/HTML/home.ejs'  );
     return ;
 
 })
@@ -37,7 +38,7 @@ Admin.get( path.home , ( req , res )=> {
 Admin.get( path.register , ( req , res )=> {
     
     if( req.session.AuthUser == 0){
-        render( res , '../templates/HTML/register.html' );
+        render( res , '../templates/HTML/register.ejs' );
     }
 
     else{
@@ -50,7 +51,7 @@ Admin.get( path.register , ( req , res )=> {
 Admin.get( path.login , (req,res)=> {
 
     if( req.session.AuthUser == 0){
-        render( res , '../templates/HTML/login.html' );    
+        render( res , '../templates/HTML/login.ejs' );    
     }
 
     else{
@@ -62,7 +63,9 @@ Admin.get( path.login , (req,res)=> {
 Admin.get( path.my , (req,res)=> {
 
     if( req.session.AuthUser == 1){
-        render( res , '../templates/HTML/my.html' );
+
+        retrieveMY( PollReader , DBadmin , req , res );
+
     }
 
     else{
@@ -84,16 +87,43 @@ Admin.get( path.logout , (req,res)=> {
 
 })
 
-
 Admin.get( path.createpoll , (req , res )=> {
 
     if( req.session.AuthUser == 1){
-        render( res , '../templates/HTML/createpoll.html' );
+        render( res , '../templates/HTML/createpoll.ejs' );
     }
     else{
         redirect( res , path.home )
     }
     return ;
+})
+
+Admin.get( path.voteView , (req , res)=> {
+    render( res , '../templates/HTML/view.ejs');
+    return ;
+})
+
+Admin.get( path.vote , (req,res)=> {
+    
+    if( isEligible( req , res ) ){
+        res.end('you can vote');
+    }
+
+    else{
+        console.log( req.query )
+        redirect( res , path.voteView );
+    }
+    return ;
+})
+
+Admin.get( '/CSS' , (req , res)=> {
+   
+    let fileCss = readFileSync('../templates/CSS/' + req.url ) ;
+    res.writeHead( 200 , {'Content-Type':'text/css'});
+    res.end( fileCss ) ;
+   
+    return ;
+
 })
 
 
@@ -218,13 +248,25 @@ PollHandler.on( 'done-expiredpoll' , ( Qno )=> {
 
 })
 
+PollReader.on( 'done-retrievePollData' , (err , data , request , response )=> {
+    if(err){
+        redirect( response ,  path.home );
+    }
+    else{
+        let sendData = arrangeData(data) ;
+        render( response , '../templates/HTML/my.ejs' , sendData  );
+    }
+
+    return ;
+})
+
 
 
 // ====================  main function ====================== //
 
 function main( req , res ){
-    let url = req.url ; 
-
+    let url = req.url ;
+   
     if( url == '/favicon.ico' ){ return ; }
 
     Admin.Execute_MiddleWare( req , res );
