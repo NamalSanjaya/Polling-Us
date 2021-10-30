@@ -212,23 +212,21 @@ class Connection_DB{
     // data -> array
     _addAnswers( data , Qno , pHandler , request , response ){
         let query = `insert into answers
-                     values(?,?,?)` ;
+                     values(?,?,?,?)` ;
         let len = data.length ;
         let cnt = 0;
-        for( let ans of data){
+        for(let ans of data){
             
-            this.connection.query( query , [ans, Qno, 0] , (err,result,fields)=> {
+            this.connection.query( query ,[ ans.AnswerNo , ans.Answer , Qno, 0] , (err,result,fields)=> {
                 if(err){
                     //server error
                     console.log('server error-_addAnswers')
                 }
                 else{
-                    console.log(`${ ans } : ${Qno}`)
                     cnt++ ;
                 }
   
                 if( len == cnt){
-                    console.log(`poll added completed : ${ Qno }`)
                     pHandler.emit('done-addpoll' , null , request , response );
                     return ;
                 }
@@ -249,7 +247,7 @@ class Connection_DB{
 
                 if( err ){
                     // server error
-                    console.log('!! server error-addPoll');
+                    console.log('!! server error-addPoll | ' + err.message );
                     return ;
                 }
 
@@ -260,6 +258,40 @@ class Connection_DB{
 
          });
          return ;
+    }
+
+    decideState(stTime){
+        let nw = timeNow();
+
+        if( stTime <= nw ){
+            return 1
+        }
+
+        else{
+            return 0 ;
+        }
+    }
+
+    createPoll( data , pHandler , request , response ){
+        let qury = `select Email from currentsessions where sessionId=?` ;
+
+        this.connection.query( qury , [ request.session.SessionId ] , (err,result , fields)=> {
+            if(err){
+                console.log('server error | ' + err.message);
+            }
+            else if( result.length == 0){
+                console.log('UnAuthorized access..?? poll creation is falied');
+            }
+            else{
+
+                data.Email = result[0].Email ;
+                data.State = this.decideState( data.startTime );
+                this.addPoll( data , pHandler , request , response );
+               
+            }
+            return  ;
+        })
+
     }
 
 
@@ -303,6 +335,86 @@ class Connection_DB{
                 prHandler.emit( 'done-retrievePollData' , null , result , request , response );
                 return ;
             }
+        })
+    }
+
+    singlePollRetrieve( Id , prHandler , request , response ){
+
+        let query = `select tq.* , ta.AnswerNo , ta.Answer , ta.Ans_Count
+                    from (
+                        select * from questions where QuestionNo = ?
+                    ) tq
+                    inner join answers ta
+                    on tq.QuestionNo = ta.QuestionNo` ;
+
+        this.connection.query( query , [ Id ] , (err , result , fields )=> {
+            if(err){
+                // server error - need to handle
+                console.log('server error-singlePollRetrieve');
+                return ;
+            }
+
+            else{
+                prHandler.emit( 'done-retrievePollData' , null , result , request , response );
+                return ;
+            }
+
+            return 
+        })
+    }
+
+    _makeArray(Ln){
+        let y = '(?' ;
+        let ln = Ln-1;
+
+        for(let ind=0 ; ind <= ln ; ind++){
+            
+            if( ind == ln){
+                y += ')';
+            }
+            else{
+                y+= ',?'
+            }
+        }
+        return y;
+
+    }
+
+    increase_Ans_Count( ansArray , pHandler , request , response ){
+        let qry = `update answers
+        set Ans_Count = Ans_Count + 1 
+        where AnswerNo In ` + this._makeArray( ansArray.length );
+
+        this.connection.query( qry , ansArray , (err,result,fields)=> {
+            if(err){
+                // need to handle
+                console.log('server error-increase_Ans_Count');
+                return ;
+            }
+            else{
+                pHandler.emit('done-ansIncreased' , null , request , response );
+                return ;
+            }
+        })
+    }
+
+    updateEndTime( data , request , response ){
+        let qry = `update questions
+                   set endTime = ?
+                   where QuestionNo = ?` ;
+
+        this.connection.query( qry , [ data.exdTime , data.Qno ] , (err,result , fields )=> {
+
+            if(err){
+                //server error 
+                console.log('server error-updateTime');
+            }
+
+            else{
+                response.end('test tempory page..');  // test line
+            }
+
+            return ;
         })
     }
 

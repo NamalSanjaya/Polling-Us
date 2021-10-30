@@ -51,7 +51,7 @@ function session( request , response ){
     if( ind >= 0){
         // authenticated user
         request.session = _extracCookie( cke , ind );
-        timeMul = 4 ;
+        timeMul = 10 ;
     }
 
     else{
@@ -71,7 +71,7 @@ function attachBody( request , option = null){
 
     request.on('data' , (chunk) => {
         data += chunk.toString() ;
-        request.body = parse( data );
+        request.body = parse( data );                                       
         return ;
     })
 }
@@ -110,7 +110,7 @@ function voteSeperation( request , response ){
 // page rendering 
 function render(  response  , path   , _data='' , statusCode = 200 ){
     
-    ejs.renderFile( path , { data: _data } , (err , page)=> {
+    ejs.renderFile( path , _data , (err , page)=> {
 
         response.writeHead( statusCode , {'Content-Type':'text/html'} );
         response.end( page );
@@ -170,19 +170,72 @@ function retrieveMY(prHandler , db , request , response ){
 
 }
 
+// retrieve singal poll info
+
+function pollView( prHandler , db , request , response ){
+    
+    let _id = Number.parseInt( request.query.id ) ;
+    db.singlePollRetrieve( _id , prHandler , request , response );
+    return ;
+}
+
+
 // =================== poll creation ======================= //
+
+function fieldSep( exp ){
+    if( exp.length == 1){
+        return Number.parseInt( exp )
+    }
+    else{
+        let time = new Date(exp) , refTime = new Date('2021-10-01T00:00:00');
+        return Math.floor( time.getTime() - refTime.getTime() )/60000 ;  // to minuites
+
+    }
+}
+
+
+
+function setdataCreation( data ){
+    let result = {}  , ansArray = [];
+    for( let key in data){
+
+        if( key.search(/Ques/) == 0 ){
+
+            result.QuestionNo = Number.parseInt( key.slice(5).trim() );
+            result.Question   = data[ key ].trim() ;
+        }
+
+        else if( key.search(/ans/) == 0 ){
+
+            let _ansNo = Number.parseInt( key.slice(4).trim() );
+            let _ans   = data[ key ].trim();
+
+            ansArray.push( { AnswerNo: _ansNo , Answer: _ans } );
+        }
+
+        else{
+            result[ key ] = fieldSep( data[ key ]  );
+        }
+    }
+
+    result.Answers = ansArray ;
+    return result;
+}
 
 
 function create_poll( pHandler , db , request , response ){
 
     request.on( 'end' , ()=> {
-        db.addPoll( request.body , pHandler , request , response );
+
+        request.body =  setdataCreation( request.body);
+        db.createPoll( request.body , pHandler , request , response );
+       /// response.end('create the poll..');
     })
 
     return ;
 }
 
-function _expiredPoll( qno , _pHandler){
+function expiredPoll( qno , _pHandler){
 
     _pHandler.emit( 'done-expiredpoll' , qno );
     return ;
@@ -193,7 +246,7 @@ function _handOver( qno , stime, etime , LiveBg , SchBg , pHandler ){
 
     let tm1 = (etime-stime)*60000 ;
     delete SchBg[qno] ;
-    LiveBg[qno] = setTimeout( _expiredPoll ,tm1 , qno , pHandler);
+    LiveBg[qno] = setTimeout( expiredPoll ,tm1 , qno , pHandler);
     console.log(`poll handover ${ qno }`);
     return ;
 
@@ -207,7 +260,7 @@ function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
         let timeout1 = (eTime - sTime)*60000 ;
         console.log(`poll start .... ${ qno }`);
 
-        Lbag[ qno ] = setTimeout( _expiredPoll , timeout1 , qno , pHandler );
+        Lbag[ qno ] = setTimeout( expiredPoll , timeout1 , qno , pHandler );
 
     }
 
@@ -245,6 +298,34 @@ function isEligible(request,response){
         return true ;
     }
     
+}
+
+// ================== poll setting changes ========================//
+
+
+function changeTime( Incdata , now  , pHandler , Lbag    , db , cb , request , response ){
+
+    let timer = Lbag[ Incdata.Qno ] ;
+    clearTimeout( timer );
+    delete Lbag[ Incdata.Qno ];
+
+    console.log('event removed..')
+    if( Incdata.exdTime <= now ){
+        // stop poll now 
+        pHandler.emit('done-expiredpoll' , Incdata.Qno );
+    }
+
+    else{
+        // time extension
+        let newTime = ( Incdata.exdTime - now )*60000 ;
+        console.log('set time : ' + newTime );
+        Lbag[ Incdata.Qno ] = setTimeout( cb , newTime , Incdata.Qno , pHandler );
+        console.log('updated handler add again')
+        db.updateEndTime( Incdata ,  request , response );
+
+    }
+
+    return ;
 }
 
 
@@ -308,7 +389,12 @@ function arrangeData( arr ){
 
 }
 
+function createQueryUrl(pathnme , id){
+    return pathnme + '?id=' + id ;
+}
 
-module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,
-                   changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation }
+
+module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
+                   changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
+                   createQueryUrl , changeTime , expiredPoll }
 

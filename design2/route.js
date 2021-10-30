@@ -12,12 +12,15 @@ class Router{
 
         this.urlPattern = {
             home:'/home' , register:'/home/register' , login:'/home/login' , my:'/my' ,
-            logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view'
+            logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view',notFnd: '/home/404', 
+            poll:{
+                timeExtend: '/my/poll/time-extend'
+            }
         }
        
         this.GET  = [  ];
         this.POST = [  ];
-        this.CSSpaths = [ 'bar.css' ]
+        this.CSSpaths = [ 'bar.css' , 'base.css' , 'home.css' , 'login.css' , 'register.css' , 'createpoll.css' ]
     }
 
     _StaticFileExcute( request , response  , array , pattern ){
@@ -40,6 +43,7 @@ class Router{
 
         for( let echNode of array ){
             if( echNode.pathname == reqUrl ){
+               
                 echNode.callback.call( this , request  , response );
                 return true ;
             }
