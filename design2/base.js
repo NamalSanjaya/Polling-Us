@@ -28,7 +28,7 @@ function _createId(){
     let datePart = ( Date.now() - ref ).toString() ;
     let id1 = datePart.slice(5).padEnd( 5 , datePart[0] ) ;
     let id2 = ( Math.random() * 1e5 ).toString().slice(0,4);
-   
+    console.log(  'sessionID: ' , id1 + id2  );
     return id1 + id2 ;
 
 }
@@ -76,7 +76,36 @@ function attachBody( request , option = null){
     })
 }
 
+function link2Id( lnk ){
+    if(lnk.length > 0){
+
+        try {
+
+            let parts = lnk.split('Z');
+            let p1 =  Number.parseInt( parts[0] , 16 ) - 1e5 ;
+            let p2 = Number.parseInt( parts[1] , 8 ) - 1e5 ;
+
+            if( p1 != p2 ){
+                return '' ;
+            }
+
+            return p1.toString() ;
+            
+        } catch (error) {
+            return '' ;
+        }
+    }
+
+    return ''
+}
+
+function Id2link( idNum ){
+    let refNum = Number.parseInt( idNum ) ;
+    return (refNum + 1e5).toString(16) + "Z" + (refNum + 1e5).toString(8);
+}
+
 function voteSeperation( request , response ){
+
     let _pathname = request.url ;
     let Ind = _pathname.search(/^\/vote/);
     request.headers.cookie = request.headers.cookie  || '' ; 
@@ -84,8 +113,8 @@ function voteSeperation( request , response ){
     if( Ind == 0 ){
     
         let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
-        let _id    = UrlObj.searchParams.get('id') || '';
-
+        let _id    =   link2Id( UrlObj.searchParams.get('id') || '' ) ;
+   
         let SInd =  request.headers.cookie.search(/SessionId=/);
         request.url = UrlObj.pathname ;
         request.query = { id: _id } ;
@@ -173,7 +202,7 @@ function retrieveMY(prHandler , db , request , response ){
 // retrieve singal poll info
 
 function pollView( prHandler , db , request , response ){
-    
+
     let _id = Number.parseInt( request.query.id ) ;
     db.singlePollRetrieve( _id , prHandler , request , response );
     return ;
@@ -279,9 +308,9 @@ function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
 
 function isEligible(request,response){
     let qnoId = request.query;
-    let cookieId = request.voteId ;
+    let cookieId = link2Id( request.voteId );
     let hr = 60; // 1 hr life time
-    
+    console.log( qnoId , cookieId , '|' , request.voteId ,  '|')
     if( qnoId.id.length == 0 ){
         return false ;
     }
@@ -292,13 +321,14 @@ function isEligible(request,response){
     else{
         let now = new Date( Date.now()  +  60000* hr);
         let time = '; Expires=' + now.toUTCString() ;
-
-        let cookie =  qnoId.id.concat( time , '; Path=/vote' )
+        let sendCke = Id2link( qnoId.id );
+        let cookie =  sendCke.concat( time , '; Path=/vote' )
         response.setHeader( 'Set-Cookie', [ cookie ] ) ;
         return true ;
     }
     
 }
+
 
 // ================== poll setting changes ========================//
 
@@ -396,5 +426,5 @@ function createQueryUrl(pathnme , id){
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
                    changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
-                   createQueryUrl , changeTime , expiredPoll }
+                   createQueryUrl , changeTime , expiredPoll , Id2link }
 

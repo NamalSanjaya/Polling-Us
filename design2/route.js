@@ -110,21 +110,3 @@ class Router{
 
 module.exports = { Router }
 
-// let root = new Root();
-
-// root.get('/' , (res)=>{
-//     console.log('route : /' , res.name );
-// });
-
-// root.get('/home' , (res)=>{
-//     console.log('route : /home' , res.name );
-// });
-
-// root.post('/register' , (res)=>{
-//     console.log('route : /register' , res.name  );
-// });
-
-
-// root.router( { method : 'POST' , url : '/register' } , { name:'nimal'} )
-
-

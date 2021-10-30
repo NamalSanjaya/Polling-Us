@@ -314,7 +314,7 @@ class Connection_DB{
         return ;
     }
 
-
+    // ongoing polls only
     retrievePoll( Id , prHandler , request , response ){
 
         let query = `select q.* , a.AnswerNo , a.Answer , a.Ans_Count
@@ -322,18 +322,19 @@ class Connection_DB{
                     inner join (
                             select Email from currentsessions where SessionId = ?
                     ) s on q.Email = s.Email 
-                    inner join answers a on a.QuestionNo = q.QuestionNo ` ;
+                    inner join answers a on a.QuestionNo = q.QuestionNo
+                    where q.State=1 order by q.startTime desc` ;
 
         this.connection.query( query , [ Id ] , (err,result , fields)=> {
             if(err){
                 //server error 
                 console.log('server error- retrievePoll');
             }
-
             else{
-
+                
                 prHandler.emit( 'done-retrievePollData' , null , result , request , response );
                 return ;
+            
             }
         })
     }
@@ -345,7 +346,8 @@ class Connection_DB{
                         select * from questions where QuestionNo = ?
                     ) tq
                     inner join answers ta
-                    on tq.QuestionNo = ta.QuestionNo` ;
+                    on tq.QuestionNo = ta.QuestionNo
+                    where tq.State=1` ;
 
         this.connection.query( query , [ Id ] , (err , result , fields )=> {
             if(err){
@@ -355,7 +357,8 @@ class Connection_DB{
             }
 
             else{
-                prHandler.emit( 'done-retrievePollData' , null , result , request , response );
+               
+                prHandler.emit( 'done-singlePollData' , null , result , request , response );
                 return ;
             }
 
@@ -384,7 +387,7 @@ class Connection_DB{
         let qry = `update answers
         set Ans_Count = Ans_Count + 1 
         where AnswerNo In ` + this._makeArray( ansArray.length );
-
+      
         this.connection.query( qry , ansArray , (err,result,fields)=> {
             if(err){
                 // need to handle
@@ -414,6 +417,27 @@ class Connection_DB{
                 response.end('test tempory page..');  // test line
             }
 
+            return ;
+        })
+    }
+
+    beforeAllowVote( quesNo , prHandler , request , response ){
+        let qry = `select QuestionNo from questions where QuestionNo=? and State=1`;
+        this.connection.query( qry , [ quesNo ] , (err , result , fields)=> {
+            if( err ){
+                console.log('server error-beforeAllowed|' + err.message )
+            }
+
+            else{
+                let er = null;
+
+                if( result.length == 0){
+                    er = 'some error' ;
+                }
+                console.log( result )
+                prHandler.emit('done-validation' , er  , request , response );
+
+            }
             return ;
         })
     }

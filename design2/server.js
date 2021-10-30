@@ -9,14 +9,14 @@ const { Connection_DB }  = require('./model');
 
 const { register , login , render, redirect , logout , retrieveMY ,isEligible, createQueryUrl ,
     create_poll , assignBag , changeCookie, timeNow , arrangeData, pollView ,
-    changeTime , expiredPoll } = require('./base');
+    changeTime , expiredPoll , Id2link  } = require('./base');
 
 
 
 /// server call
 let Admin = new Manager() ;
 let DBadmin = new Connection_DB();
-let RegHandler = Admin.RegHandler() ;
+let RegHandler = Admin.RegHandler() ; 
 let LgHandler = Admin.LgHandler();
 let PollHandler = Admin.PollHandler() ;
 let PollReader = Admin.PollReader() ;
@@ -132,15 +132,11 @@ Admin.get( path.createpoll , (req , res )=> {
     return ;
 })
 
-Admin.get( path.voteView , (req , res)=> {
-    render( res , '../templates/HTML/view.ejs');
-    return ;
-})
 
 Admin.get( path.vote , (req,res)=> {
     
     if( isEligible( req , res ) ){
-        render( res , '../templates/HTML/vote.ejs');
+        DBadmin.beforeAllowVote( req.query.id ,  PollReader ,req , res );
     }
 
     else{
@@ -213,19 +209,16 @@ Admin.post( path.createpoll , (req , res )=> {
 })
 
 Admin.post( path.vote , (req , res) => {
-    let arr = [1005,1006] ; // test data
+    let arr = [ 1020 ] ; // test data
     DBadmin.increase_Ans_Count( arr , PollHandler , req , res );
     return ;
 })
-
 
 
 // =========================== Ajax request =========================== //
 
 
 // ajax - POST
-
-
 
 
 
@@ -280,9 +273,9 @@ LgHandler.on('done-logout' , (err, request , response)=> {
 
 
 PollHandler.on( 'done-addpoll', (err,request,response)=> {
-
+    let msg;
     if(err){
-        redirect( response , path.my);
+        msg = 'poll creation partially successfull - server side error occurried..' ;
     }
     else{
         let stTime = request.body[ DBadmin.pollc.stTime ] ;
@@ -290,10 +283,12 @@ PollHandler.on( 'done-addpoll', (err,request,response)=> {
         let now = timeNow() ;
         let Qno = request.body[ DBadmin.pollc.Qno ] ;
         assignBag(stTime,eTime,now,Qno, Admin.liveBag , Admin.schduleBag , PollHandler ) ;
-        
+
         Admin.setForNxtPoll( request.body.Answers.length );
-        response.end('Wait');
+        msg = 'sucessfully created...'
     }
+   redirect( response , path.my )
+
     return ;
 })
 
@@ -311,8 +306,8 @@ PollHandler.on('done-ansIncreased' , (err , request,response)=> {
         redirect( response , path.home )
     }
 
-    else{
-        redirect( response , createQueryUrl( path.vote , request.query.id ) )
+    else{ 
+        redirect( response , createQueryUrl( path.vote , Id2link( request.query.id ) ) )
     }
 
     return ;
@@ -325,11 +320,39 @@ PollReader.on( 'done-retrievePollData' , (err , data , request , response )=> {
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/pollView.ejs' , { data: sendData }  );
+        render( response , '../templates/HTML/my.ejs' , { mydata: sendData }  );
     }
 
     return ;
 })
+
+PollReader.on( 'done-singlePollData'  , (err , data , request , response )=> {
+
+    if(err){
+        redirect( response ,  path.home );
+    }
+    else{
+        let sendData = arrangeData(data) ;
+        render( response , '../templates/HTML/view.ejs' , { mydata: sendData }  );
+    }
+
+    return ;
+})
+
+PollReader.on('done-validation' , (err , request , response )=> {
+    let msg;
+    if(err){
+        redirect( response , path.notFnd );
+    }
+
+    else{
+        render(  response , '../templates/HTML/vote.ejs' )
+    }
+
+    return ;
+})
+
+
 
 
 
