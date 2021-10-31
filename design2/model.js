@@ -401,7 +401,7 @@ class Connection_DB{
         })
     }
 
-    updateEndTime( data , request , response ){
+    updateEndTime( data , pHandler , request , response ){
         let qry = `update questions
                    set endTime = ?
                    where QuestionNo = ?` ;
@@ -414,12 +414,13 @@ class Connection_DB{
             }
 
             else{
-                response.end('test tempory page..');  // test line
+                pHandler.emit('done-extended' , null , request , response );
             }
 
             return ;
         })
     }
+
 
     beforeAllowVote( quesNo , prHandler , request , response ){
         let qry = `select QuestionNo from questions where QuestionNo=? and State=1`;
@@ -434,7 +435,7 @@ class Connection_DB{
                 if( result.length == 0){
                     er = 'some error' ;
                 }
-                console.log( result )
+              
                 prHandler.emit('done-validation' , er  , request , response );
 
             }

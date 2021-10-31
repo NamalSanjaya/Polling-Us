@@ -28,7 +28,6 @@ function _createId(){
     let datePart = ( Date.now() - ref ).toString() ;
     let id1 = datePart.slice(5).padEnd( 5 , datePart[0] ) ;
     let id2 = ( Math.random() * 1e5 ).toString().slice(0,4);
-    console.log(  'sessionID: ' , id1 + id2  );
     return id1 + id2 ;
 
 }
@@ -310,7 +309,6 @@ function isEligible(request,response){
     let qnoId = request.query;
     let cookieId = link2Id( request.voteId );
     let hr = 60; // 1 hr life time
-    console.log( qnoId , cookieId , '|' , request.voteId ,  '|')
     if( qnoId.id.length == 0 ){
         return false ;
     }
@@ -332,6 +330,20 @@ function isEligible(request,response){
 
 // ================== poll setting changes ========================//
 
+function beforeExtendTime( pHandler  , request , response ){
+    let dt = ''
+    request.on('data' , (chunk)=> {
+        dt += chunk.toString() ;
+    })
+
+    request.on('end',()=> {
+        let data = JSON.parse( dt )
+        pHandler.emit('done-dataExtendTime' , data ,  request , response ) ;
+        return ;
+    })
+}
+
+
 
 function changeTime( Incdata , now  , pHandler , Lbag    , db , cb , request , response ){
 
@@ -351,8 +363,8 @@ function changeTime( Incdata , now  , pHandler , Lbag    , db , cb , request , r
         console.log('set time : ' + newTime );
         Lbag[ Incdata.Qno ] = setTimeout( cb , newTime , Incdata.Qno , pHandler );
         console.log('updated handler add again')
-        db.updateEndTime( Incdata ,  request , response );
-
+        db.updateEndTime( Incdata , pHandler  , request , response );
+ 
     }
 
     return ;
@@ -426,5 +438,5 @@ function createQueryUrl(pathnme , id){
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
                    changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
-                   createQueryUrl , changeTime , expiredPoll , Id2link }
+                   createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime}
 

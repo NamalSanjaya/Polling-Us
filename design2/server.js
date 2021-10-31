@@ -9,7 +9,7 @@ const { Connection_DB }  = require('./model');
 
 const { register , login , render, redirect , logout , retrieveMY ,isEligible, createQueryUrl ,
     create_poll , assignBag , changeCookie, timeNow , arrangeData, pollView ,
-    changeTime , expiredPoll , Id2link  } = require('./base');
+    changeTime , expiredPoll , Id2link , beforeExtendTime } = require('./base');
 
 
 
@@ -27,31 +27,6 @@ const server = http.createServer( main ).listen( 8000 , ()=>console.log('listen.
 
 
 // =======================  route - callback ================================= //
-
-
-// AJAX get request
-
-Admin.get( path.poll.timeExtend , ( req , res )=> {
-    let newTime = { Qno: '106' , exdTime: 35236 }; //testing line
-    let now = timeNow() ;
-
-    if( req.session.AuthUser == 0){
-        redirect( res , path.home );
-        return ;
-    }
-    if( Admin.liveBag.hasOwnProperty( newTime.Qno )  ){
-        
-        changeTime( newTime , now , PollHandler , Admin.liveBag , DBadmin , expiredPoll  ,  req , res );
-        return ;
-    }
-
-    else{
-        let msg = 'could not update' ;
-        redirect( res , path.my )
-        return ;
-    }
-
-})
 
 
 /* GET request */
@@ -209,9 +184,23 @@ Admin.post( path.createpoll , (req , res )=> {
 })
 
 Admin.post( path.vote , (req , res) => {
-    let arr = [ 1020 ] ; // test data
+    let arr = [ 1022 ] ; // test data
     DBadmin.increase_Ans_Count( arr , PollHandler , req , res );
     return ;
+})
+
+
+Admin.post( path.poll.timeExtend , ( req , res )=> {
+
+    if( req.session.AuthUser == 0){
+        res.end('Authorized access');
+        return ;
+    }
+
+    else{
+        beforeExtendTime( PollHandler ,  req , res );
+        return;
+    }
 })
 
 
@@ -320,7 +309,7 @@ PollReader.on( 'done-retrievePollData' , (err , data , request , response )=> {
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/my.ejs' , { mydata: sendData }  );
+        render( response , '../templates/HTML/my.ejs' , { mydata: sendData , myuser: 1 }  );
     }
 
     return ;
@@ -333,7 +322,7 @@ PollReader.on( 'done-singlePollData'  , (err , data , request , response )=> {
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/view.ejs' , { mydata: sendData }  );
+        render( response , '../templates/HTML/view.ejs' , { mydata: sendData , myuser:0 }  );
     }
 
     return ;
@@ -352,8 +341,33 @@ PollReader.on('done-validation' , (err , request , response )=> {
     return ;
 })
 
+PollHandler.on('done-extended' , (err , request , response ) => {
+    let msg;
+    if( err ){
+        msg = 'some error occuried'
+    }
+    else{
+        msg = 'time extended successfully' ;
+    }
+    response.end( msg );
+    return ;
+})
 
+PollHandler.on( 'done-dataExtendTime' , ( dtTime  , req , res )=> {
+    let now = timeNow() ;
+    
+    if( Admin.liveBag.hasOwnProperty( dtTime.Qno )  ){
+        
+        changeTime( dtTime , now , PollHandler , Admin.liveBag , DBadmin , expiredPoll  ,  req , res );
+        return ;
+    }
 
+    else{
+        let msg = 'could not update' ;
+        res.end(msg);
+        return ;
+    }
+})
 
 
 // ====================  main function ====================== //
