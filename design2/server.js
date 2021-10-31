@@ -335,6 +335,7 @@ PollReader.on('done-validation' , (err , request , response )=> {
     }
 
     else{
+        
         render(  response , '../templates/HTML/vote.ejs' )
     }
 
