@@ -255,7 +255,7 @@ function create_poll( pHandler , db , request , response ){
 
     request.on( 'end' , ()=> {
 
-        request.body =  setdataCreation( request.body);
+        request.body =  setdataCreation( request.body );
         db.createPoll( request.body , pHandler , request , response );
        /// response.end('create the poll..');
     })
@@ -327,6 +327,26 @@ function isEligible(request,response){
     
 }
 
+function arrangeAns( dict ){
+    let ansArr = [] ;
+    for( let key in dict){
+        ansArr.push( Number.parseInt( dict[key] ) )
+    }
+
+    return ansArr ;
+}
+
+function obtainVote(pHandler , db , request , response ){
+    let Incoming = ''
+    request.on('data' , (chunk)=> {
+        Incoming += chunk.toString() ;
+    })
+
+    request.on('end',()=> {
+        let arr = arrangeAns(   parse( Incoming ) );
+        db.increase_Ans_Count( arr , pHandler , request , response );
+    })
+}
 
 // ================== poll setting changes ========================//
 
@@ -337,7 +357,7 @@ function beforeExtendTime( pHandler  , request , response ){
     })
 
     request.on('end',()=> {
-        let data = JSON.parse( dt )
+        let data = JSON.parse( dt );
         pHandler.emit('done-dataExtendTime' , data ,  request , response ) ;
         return ;
     })
@@ -354,6 +374,7 @@ function changeTime( Incdata , now  , pHandler , Lbag    , db , cb , request , r
     console.log('event removed..')
     if( Incdata.exdTime <= now ){
         // stop poll now 
+        console.log('FINISH POLL...')
         pHandler.emit('done-expiredpoll' , Incdata.Qno );
     }
 
@@ -435,8 +456,21 @@ function createQueryUrl(pathnme , id){
     return pathnme + '?id=' + id ;
 }
 
+function arrangeToVote( array ){
+    let answers = [] , res = {} ;
+    res.Question = array[0].Question ;
+    res.multipleChoices = array[0].multipleChoices ;
+    for(let each of array){
+        answers.push( {AnswerNo: each.AnswerNo , Answer: each.Answer} )
+    }
+
+    res.Answers = answers ;
+
+    return JSON.stringify( res );
+}
+
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
                    changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
-                   createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime}
+                   createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime, arrangeToVote , obtainVote}
 

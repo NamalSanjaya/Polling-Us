@@ -423,7 +423,11 @@ class Connection_DB{
 
 
     beforeAllowVote( quesNo , prHandler , request , response ){
-        let qry = `select QuestionNo from questions where QuestionNo=? and State=1`;
+
+        let qry = `select que.Question,que.multipleChoices ,ans.AnswerNo , ans.Answer from questions que
+                    inner join answers ans on que.QuestionNo = ans.QuestionNo
+                    where que.QuestionNo = ? and que.State = 1`;
+
         this.connection.query( qry , [ quesNo ] , (err , result , fields)=> {
             if( err ){
                 console.log('server error-beforeAllowed|' + err.message )
@@ -436,7 +440,7 @@ class Connection_DB{
                     er = 'some error' ;
                 }
               
-                prHandler.emit('done-validation' , er  , request , response );
+                prHandler.emit('done-validation' , er  , result  , request , response );
 
             }
             return ;

@@ -9,7 +9,7 @@ const { Connection_DB }  = require('./model');
 
 const { register , login , render, redirect , logout , retrieveMY ,isEligible, createQueryUrl ,
     create_poll , assignBag , changeCookie, timeNow , arrangeData, pollView ,
-    changeTime , expiredPoll , Id2link , beforeExtendTime } = require('./base');
+    changeTime , expiredPoll , Id2link , beforeExtendTime , arrangeToVote , obtainVote} = require('./base');
 
 
 
@@ -127,6 +127,18 @@ Admin.get( path.vote , (req,res)=> {
     return ;
 })
 
+Admin.get( path.poll.editPoll , ( req , res )=> {
+
+    if( req.session.AuthUser == 0){
+        redirect( res , path.notFnd );
+    }
+
+    else{
+        console.log( req.url )
+    }
+})
+
+
 Admin.get( '/CSS/' , (req , res)=> {
     
     let fileCss = readFileSync('../templates/CSS/' + req.url ) ;
@@ -184,8 +196,9 @@ Admin.post( path.createpoll , (req , res )=> {
 })
 
 Admin.post( path.vote , (req , res) => {
-    let arr = [ 1022 ] ; // test data
-    DBadmin.increase_Ans_Count( arr , PollHandler , req , res );
+
+    obtainVote( PollHandler , DBadmin , req , res)
+    
     return ;
 })
 
@@ -202,12 +215,6 @@ Admin.post( path.poll.timeExtend , ( req , res )=> {
         return;
     }
 })
-
-
-// =========================== Ajax request =========================== //
-
-
-// ajax - POST
 
 
 
@@ -328,15 +335,15 @@ PollReader.on( 'done-singlePollData'  , (err , data , request , response )=> {
     return ;
 })
 
-PollReader.on('done-validation' , (err , request , response )=> {
+PollReader.on('done-validation' , (err , voteData  , request , response )=> {
     let msg;
     if(err){
         redirect( response , path.notFnd );
     }
 
     else{
-        
-        render(  response , '../templates/HTML/vote.ejs' )
+        let sndData = arrangeToVote( voteData );
+        render(  response , '../templates/HTML/vote.ejs' , { Vdata: sndData })
     }
 
     return ;
@@ -382,7 +389,7 @@ function main( req , res ){
     let success  = Admin.router( req , res );
 
     if( !success ){
-        redirect(  res , path.notFnd , )
+        redirect(  res , path.notFnd  )
     }
 
     return ;

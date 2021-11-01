@@ -14,13 +14,13 @@ class Router{
             home:'/home' , register:'/home/register' , login:'/home/login' , my:'/my' ,
             logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view',notFnd: '/home/404', 
             poll:{
-                timeExtend: '/my/poll/time-extend'
+                timeExtend: '/my/poll/time-extend' , editPoll: '/my/poll/edit'
             }
         }
        
         this.GET  = [  ];
         this.POST = [  ];
-        this.CSSpaths = [ 'bar.css' , 'base.css' , 'home.css' , 'login.css' , 'register.css' , 'createpoll.css' ]
+        this.CSSpaths = [ 'bar.css' , 'base.css' , 'home.css' , 'login.css' , 'register.css' , 'createpoll.css' , 'vote.css' ]
     }
 
     _StaticFileExcute( request , response  , array , pattern ){
@@ -35,7 +35,6 @@ class Router{
         }
         return false ;
     }
-
 
 
     _excute( request , response  , array ){
