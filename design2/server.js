@@ -329,7 +329,6 @@ PollHandler.on( 'done-expiredpoll' , ( Qno )=> {
 
 PollHandler.on('done-ansIncreased' , (err , request,response)=> {
     if(err){
-        //redirect to home with error message
         redirect( response , path.home )
     }
 
