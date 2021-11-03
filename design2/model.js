@@ -280,7 +280,8 @@ class Connection_DB{
                 console.log('server error | ' + err.message);
             }
             else if( result.length == 0){
-                console.log('UnAuthorized access..?? poll creation is falied');
+                let msg = 'UnAuthorized access..?? poll creation is falied' ;
+                pHandler.emit('done-addpoll' , msg , request , response );
             }
             else{
 
@@ -315,7 +316,7 @@ class Connection_DB{
     }
 
     // ongoing polls only
-    retrievePoll( Id , prHandler , request , response ){
+    retrievePoll( Id , state , prHandler , request , response ){
 
         let query = `select q.* , a.AnswerNo , a.Answer , a.Ans_Count
                     from questions q
@@ -323,16 +324,16 @@ class Connection_DB{
                             select Email from currentsessions where SessionId = ?
                     ) s on q.Email = s.Email 
                     inner join answers a on a.QuestionNo = q.QuestionNo
-                    where q.State=1 order by q.startTime desc` ;
+                    where q.State=? order by q.startTime desc` ;
 
-        this.connection.query( query , [ Id ] , (err,result , fields)=> {
+        this.connection.query( query , [ Id , state ] , (err,result , fields)=> {
             if(err){
                 //server error 
                 console.log('server error- retrievePoll');
             }
             else{
                 
-                prHandler.emit( 'done-retrievePollData' , null , result , request , response );
+                prHandler.emit( 'done-retrievePollData' , null , result , state ,  request , response );
                 return ;
             
             }
@@ -444,6 +445,89 @@ class Connection_DB{
 
             }
             return ;
+        })
+    }
+
+
+    editPage(  quesNo , prHandler , request , response  ){
+
+        let qury = `select tqq.QuestionNo , tqq.Question , tqq.startTime , tqq.endTime , tqq.multipleChoices , ta.AnswerNo , ta.Answer  
+                    from answers ta
+                    inner join (
+                        select tq.* from questions tq
+                        where tq.Email In ( 
+                            select tc.Email from currentsessions tc where tc.sessionId = ?
+                        ) and tq.QuestionNo = ? and tq.State = 0 
+                    ) tqq on tqq.QuestionNo = ta.QuestionNo order by ta.AnswerNo`;
+
+        this.connection.query( qury , [ request.session.SessionId , quesNo ] , (err , result , fields)=>{
+
+            if(err){
+                console.log('server error | ' , err.message  )
+            }
+            else{
+                let er = null;
+
+                if( result.length == 0){
+                    er = 'some error' ;
+                }
+              
+                prHandler.emit('done-EditDataFetched' , er  , result  , request , response );
+
+            }
+            return ;
+        })
+
+    }
+
+    updatePoll( quesNo , prHandler , request , response ){
+        let qury = `delete from questions tqo where tqo.QuestionNo = ?`;
+
+        this.connection.query( qury , [ quesNo ] , (err,result , fields)=> {
+             if( err ){
+                 console.log('server error-updatePoll | ' + err.message )
+             }
+             else{
+                 prHandler.emit( 'done-editSave' , null , request , response );
+             }
+             return ;
+        })
+    }
+
+
+    removeCurrentPoll( prHandler , request , response ){
+        let query = `select tqI.QuestionNo from questions tqI
+                    where tqI.Email In ( select tc.Email from currentsessions tc 
+                                        where tc.sessionId = ? ) 
+                    and tqI.QuestionNo = ? and tqI.State = 0` ;
+        this.connection.query( query , [ request.session.SessionId , request.body.QuestionNo ] , (err, result , fields)=> {
+
+            if(err){
+                console.log('server error-removeCurrentPoll : ' + err.message );
+            }
+
+            else if( result.length == 0){
+                let msg = 'Authorized access';
+                response.end('fail again...');
+                prHandler.emit('done-editSave', msg , request , response );
+            }
+            else{
+                console.log('done...');
+                this.updatePoll( result[0].QuestionNo , prHandler , request , response );
+            }
+            return ;
+        })
+    }
+
+    changeState( Qno ,  state   ){
+        let query = `update questions set State = ? where QuestionNo = ? ` ;
+
+        this.connection.query( query , [ state , Qno ] , ( err , result , fields )=> {
+
+                if(err){
+                    console.log('server error-changeState|' + err.message );
+                }
+        
         })
     }
 

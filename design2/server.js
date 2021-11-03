@@ -9,7 +9,8 @@ const { Connection_DB }  = require('./model');
 
 const { register , login , render, redirect , logout , retrieveMY ,isEligible, createQueryUrl ,
     create_poll , assignBag , changeCookie, timeNow , arrangeData, pollView ,
-    changeTime , expiredPoll , Id2link , beforeExtendTime , arrangeToVote , obtainVote} = require('./base');
+    changeTime , expiredPoll , Id2link , beforeExtendTime , arrangeToVote , obtainVote ,
+    dataToEdit , saveEditPoll } = require('./base');
 
 
 
@@ -72,7 +73,7 @@ Admin.get( path.my , (req,res)=> {
    
     if( req.session.AuthUser == 1){
 
-        retrieveMY( PollReader , DBadmin , req , res );
+        retrieveMY( 1  ,  PollReader , DBadmin , req , res );
 
     }
 
@@ -81,6 +82,23 @@ Admin.get( path.my , (req,res)=> {
     }
     return ;
 })
+
+
+Admin.get( path.mySchedule , (req,res)=> {
+   
+    if( req.session.AuthUser == 1){
+
+        retrieveMY(  0  ,  PollReader , DBadmin , req , res );
+
+    }
+
+    else{
+        redirect( res , path.home );
+    }
+    return ;
+})
+
+
 
 Admin.get( path.logout , (req,res)=> {
 
@@ -99,7 +117,7 @@ Admin.get( path.createpoll , (req , res )=> {
 
     if( req.session.AuthUser == 1){
         
-        render( res , '../templates/HTML/createpoll.ejs' , { quesNo: Admin.quesNo , ansStart: Admin.ansStart } );
+        render( res , '../templates/HTML/createpoll.ejs' , { quesNo: Admin.quesNo , ansStart: Admin.ansStart , editDt:null } );
     }
     else{
         redirect( res , path.home );
@@ -134,7 +152,7 @@ Admin.get( path.poll.editPoll , ( req , res )=> {
     }
 
     else{
-        console.log( req.url )
+        DBadmin.editPage( req.query.quesNo , PollReader , req , res );
     }
 })
 
@@ -183,7 +201,7 @@ Admin.post( path.login , ( req , res )=> {
 
 Admin.post( path.createpoll , (req , res )=> {
 
-    if( req.session.AuthUser == 1){
+    if( req.session.AuthUser == 1 ){
        create_poll( PollHandler , DBadmin, req , res );
       
     }
@@ -206,7 +224,7 @@ Admin.post( path.vote , (req , res) => {
 Admin.post( path.poll.timeExtend , ( req , res )=> {
 
     if( req.session.AuthUser == 0){
-        res.end('Authorized access');
+        redirect(res , path.notFnd ) ;
         return ;
     }
 
@@ -216,6 +234,19 @@ Admin.post( path.poll.timeExtend , ( req , res )=> {
     }
 })
 
+
+Admin.post( path.poll.editPoll , ( req , res ) => {
+
+    if( req.session.AuthUser == 0){
+        redirect(res , path.notFnd ) ;
+    }
+
+    else{
+        saveEditPoll( PollHandler , PollReader , DBadmin , Admin.schduleBag , req , res ) ; 
+    }
+
+    return ;
+})
 
 
 // =====================  registering event handlers ======================= //
@@ -271,17 +302,17 @@ LgHandler.on('done-logout' , (err, request , response)=> {
 PollHandler.on( 'done-addpoll', (err,request,response)=> {
     let msg;
     if(err){
-        msg = 'poll creation partially successfull - server side error occurried..' ;
+        msg = err ;
     }
     else{
         let stTime = request.body[ DBadmin.pollc.stTime ] ;
         let eTime  = request.body[ DBadmin.pollc.eTime ] ;
         let now = timeNow() ;
         let Qno = request.body[ DBadmin.pollc.Qno ] ;
-        assignBag(stTime,eTime,now,Qno, Admin.liveBag , Admin.schduleBag , PollHandler ) ;
+        assignBag(stTime,eTime,now,Qno, Admin.liveBag , Admin.schduleBag , PollHandler , DBadmin ) ;
 
-        Admin.setForNxtPoll( request.body.Answers.length );
-        msg = 'sucessfully created...'
+        Admin.setForNxtPoll();
+        msg = 'sucessfully created...';
     }
    redirect( response , path.my )
 
@@ -290,7 +321,7 @@ PollHandler.on( 'done-addpoll', (err,request,response)=> {
 
 
 PollHandler.on( 'done-expiredpoll' , ( Qno )=> {
-    delete Admin[ Qno ];
+    delete Admin.liveBag[ Qno ] ;
     console.log(`poll fired Over...${ Qno }`);
     return ;
 
@@ -310,13 +341,13 @@ PollHandler.on('done-ansIncreased' , (err , request,response)=> {
 
 })
 
-PollReader.on( 'done-retrievePollData' , (err , data , request , response )=> {
+PollReader.on( 'done-retrievePollData' , (err , data , _st  , request , response )=> {
     if(err){
         redirect( response ,  path.home );
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/my.ejs' , { mydata: sendData , myuser: 1 }  );
+        render( response , '../templates/HTML/my.ejs' , { mydata: sendData , myuser: 1 , state: _st }  );
     }
 
     return ;
@@ -329,7 +360,7 @@ PollReader.on( 'done-singlePollData'  , (err , data , request , response )=> {
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/view.ejs' , { mydata: sendData , myuser:0 }  );
+        render( response , '../templates/HTML/view.ejs' , { mydata: sendData , myuser:0 , state: 1 }  );
     }
 
     return ;
@@ -377,12 +408,34 @@ PollHandler.on( 'done-dataExtendTime' , ( dtTime  , req , res )=> {
     }
 })
 
+PollReader.on( 'done-EditDataFetched' , (err , data , request , response )=> {
+
+    if( err ){
+        redirect( response , path.notFnd );
+        return ;
+    }
+
+    let dta  = dataToEdit( data );
+    
+    render( response , '../templates/HTML/createpoll.ejs' , { quesNo: dta.QuestionNo  , ansStart: dta.Answers[0].AnswerNo , editDt: JSON.stringify(dta) } );
+})
+
+PollReader.on('done-editSave' , (err , request , response ) => {
+    if(err){
+        redirect( response , path.notFnd );
+        return ;
+    }
+
+    DBadmin.createPoll( request.body , PollHandler , request , response );
+    console.log('updatedd..');
+    return ;
+})
+
 
 // ====================  main function ====================== //
 
 function main( req , res ){
     let url = req.url ;
-   
     if( url == '/favicon.ico' ){ return ; }
     
     Admin.Execute_MiddleWare( req , res );

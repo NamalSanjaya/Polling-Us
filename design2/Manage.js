@@ -22,8 +22,8 @@ class Manager extends Router{
 
         this.liveBag = { } ;
         this.schduleBag = { } ;
-        this.quesNo = 132;
-        this.ansStart = 1230 ;
+        this.quesNo = 160 ;
+        this.ansStart = 1410 ;
 
     }
 
@@ -50,7 +50,7 @@ class Manager extends Router{
 
     setForNxtPoll( ansAmout ){
         this.quesNo ++ ;
-        this.ansStart += ansAmout ;
+        this.ansStart += 8 ;
     }
 
     Execute_MiddleWare( request , response ){

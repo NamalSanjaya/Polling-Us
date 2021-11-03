@@ -75,6 +75,15 @@ function attachBody( request , option = null){
     })
 }
 
+function isQues( pattern ){
+    let num = Number.parseInt( pattern )
+    if( Number.isNaN(num) || num <= 100 ){
+        return ''
+    }
+
+    return num ;
+}
+
 function link2Id( lnk ){
     if(lnk.length > 0){
 
@@ -107,11 +116,12 @@ function voteSeperation( request , response ){
 
     let _pathname = request.url ;
     let Ind = _pathname.search(/^\/vote/);
+    let Ind2 = _pathname.search( /^\/my\/poll-edit/ ) ;
     request.headers.cookie = request.headers.cookie  || '' ; 
+    let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
 
     if( Ind == 0 ){
     
-        let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
         let _id    =   link2Id( UrlObj.searchParams.get('id') || '' ) ;
    
         let SInd =  request.headers.cookie.search(/SessionId=/);
@@ -128,6 +138,34 @@ function voteSeperation( request , response ){
             request.headers.cookie = request.headers.cookie.slice(SInd,SInd+30) ;
         }
 
+    }
+    else if( Ind2 == 0 ){
+
+        let quesStr = UrlObj.searchParams.get('q');
+      
+        if( quesStr ){
+
+            let _quesNo = isQues( quesStr ) ;
+            request.query = { quesNo: _quesNo } ;
+
+            if( _quesNo === '' ){
+                request.url = '/home/404' ;
+            }
+            else{
+                request.url = UrlObj.pathname ;
+            }
+        }
+
+        else{
+            request.url = '/home/404' ;
+            request.query = { quesNo: '' } ;
+        }
+
+       
+    }
+
+    else{
+        request.url = UrlObj.pathname ;
     }
 
     return ;
@@ -191,9 +229,9 @@ function logout(lHandler , db , request , response ){
     return ;
 }
 
-function retrieveMY(prHandler , db , request , response ){
+function retrieveMY( state , prHandler , db , request , response ){
 
-    db.retrievePoll( request.session.SessionId , prHandler , request , response ) ;
+    db.retrievePoll( request.session.SessionId , state  , prHandler , request , response ) ;
     return ;
 
 }
@@ -257,7 +295,7 @@ function create_poll( pHandler , db , request , response ){
 
         request.body =  setdataCreation( request.body );
         db.createPoll( request.body , pHandler , request , response );
-       /// response.end('create the poll..');
+
     })
 
     return ;
@@ -270,10 +308,11 @@ function expiredPoll( qno , _pHandler){
 
 }
 
-function _handOver( qno , stime, etime , LiveBg , SchBg , pHandler ){
+function _handOver( qno , stime, etime , LiveBg , SchBg , pHandler , db ){
 
     let tm1 = (etime-stime)*60000 ;
     delete SchBg[qno] ;
+    db.changeState(qno , 1  );
     LiveBg[qno] = setTimeout( expiredPoll ,tm1 , qno , pHandler);
     console.log(`poll handover ${ qno }`);
     return ;
@@ -281,7 +320,7 @@ function _handOver( qno , stime, etime , LiveBg , SchBg , pHandler ){
 }
 
 
-function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
+function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler , db ){
     
     if(sTime <= nw ){
         // poll start now
@@ -297,7 +336,7 @@ function assignBag( sTime , eTime , nw , qno ,Lbag , Sbag, pHandler ){
         let timeout2 = (sTime - nw)*60000 ;
         console.log(`poll schdule for future ${ qno }`);
 
-        Sbag[ qno ] = setTimeout( _handOver , timeout2 , qno , sTime , eTime , Lbag , Sbag , pHandler );
+        Sbag[ qno ] = setTimeout( _handOver , timeout2 , qno , sTime , eTime , Lbag , Sbag , pHandler ,db );
     }
 
     return ;
@@ -337,13 +376,9 @@ function arrangeAns( dict ){
 }
 
 function obtainVote(pHandler , db , request , response ){
-    let Incoming = ''
-    request.on('data' , (chunk)=> {
-        Incoming += chunk.toString() ;
-    })
 
     request.on('end',()=> {
-        let arr = arrangeAns(   parse( Incoming ) );
+        let arr = arrangeAns( request.body );
         db.increase_Ans_Count( arr , pHandler , request , response );
     })
 }
@@ -351,7 +386,7 @@ function obtainVote(pHandler , db , request , response ){
 // ================== poll setting changes ========================//
 
 function beforeExtendTime( pHandler  , request , response ){
-    let dt = ''
+    let dt = '' ;
     request.on('data' , (chunk)=> {
         dt += chunk.toString() ;
     })
@@ -389,6 +424,45 @@ function changeTime( Incdata , now  , pHandler , Lbag    , db , cb , request , r
     }
 
     return ;
+}
+
+function dataToEdit( dta ){
+
+    let dataBox = { };
+    let Ansarr = [] ;
+    dataBox.QuestionNo = dta[0].QuestionNo
+    dataBox.Question  = dta[0].Question ;
+    dataBox.startTime = dta[0].startTime ;
+    dataBox.endTime   = dta[0].endTime ;
+    dataBox.multipleChoices = dta[0].multipleChoices ;
+
+    for( let tup of dta ){
+        Ansarr.push( { AnswerNo: tup.AnswerNo  , Answer: tup.Answer } );
+    }
+
+    dataBox.Answers = Ansarr ;
+
+    return dataBox;
+
+}
+
+function saveEditPoll(pHandler , prhandler , db   , schdBag , request , response ) {
+
+    request.on( 'end' , ()=> {
+        request.body = setdataCreation( request.body );
+        if( schdBag.hasOwnProperty( request.body.QuestionNo ) ){
+
+            db.removeCurrentPoll( prhandler , request , response );
+                        
+        }
+        else{
+            // not a poll , not a schdule poll
+            let err = 'update fail' ;
+            pHandler.emit('done-editSave' , err , request , response );
+        }
+        
+        return ;
+    })
 }
 
 
@@ -472,5 +546,6 @@ function arrangeToVote( array ){
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
                    changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
-                   createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime, arrangeToVote , obtainVote}
+                   createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime, arrangeToVote , obtainVote ,
+                   dataToEdit, saveEditPoll }
 
