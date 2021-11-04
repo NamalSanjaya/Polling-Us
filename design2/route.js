@@ -14,8 +14,8 @@ class Router{
             home:'/home' , register:'/home/register' , login:'/home/login' , my:'/my' ,
             logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view',notFnd: '/home/404', 
             poll:{
-                timeExtend: '/my/poll/time-extend' , editPoll: '/my/poll-edit'
-            } , mySchedule: '/my/schedule'
+                timeExtend: '/my/poll/time-extend' , editPoll: '/my/poll-edit' , delPoll: '/my/poll-delete' , endPoll:'/my/poll-end'
+            } , mySchedule: '/my/schedule' , myHistory:'/my/history'
         }
        
         this.GET  = [  ];

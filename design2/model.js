@@ -495,12 +495,13 @@ class Connection_DB{
     }
 
 
-    removeCurrentPoll( prHandler , request , response ){
+    removeCurrentPoll( Qno  , prHandler , request , response ){
         let query = `select tqI.QuestionNo from questions tqI
                     where tqI.Email In ( select tc.Email from currentsessions tc 
                                         where tc.sessionId = ? ) 
-                    and tqI.QuestionNo = ? and tqI.State = 0` ;
-        this.connection.query( query , [ request.session.SessionId , request.body.QuestionNo ] , (err, result , fields)=> {
+                    and tqI.QuestionNo = ? and tqI.State = ?` ;
+
+        this.connection.query( query , [ request.session.SessionId , Qno , request.session.state ] , (err, result , fields)=> {
 
             if(err){
                 console.log('server error-removeCurrentPoll : ' + err.message );

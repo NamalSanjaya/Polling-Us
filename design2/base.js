@@ -112,11 +112,24 @@ function Id2link( idNum ){
     return (refNum + 1e5).toString(16) + "Z" + (refNum + 1e5).toString(8);
 }
 
+function editORdel( ptname ){
+    let Ind3 = ptname.search( /^\/my\/poll-edit/ ) ;
+
+    if( Ind3 <= -1  ){
+        Ind3 = ptname.search( /^\/my\/poll-delete/ )
+    }
+    if( Ind3<= -1){
+        Ind3 = ptname.search( /^\/my\/poll-end/ );
+    }
+
+    return Ind3 ;
+}
+
 function voteSeperation( request , response ){
 
     let _pathname = request.url ;
     let Ind = _pathname.search(/^\/vote/);
-    let Ind2 = _pathname.search( /^\/my\/poll-edit/ ) ;
+    let Ind2 = editORdel( _pathname ) ;
     request.headers.cookie = request.headers.cookie  || '' ; 
     let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
 
@@ -452,7 +465,7 @@ function saveEditPoll(pHandler , prhandler , db   , schdBag , request , response
         request.body = setdataCreation( request.body );
         if( schdBag.hasOwnProperty( request.body.QuestionNo ) ){
 
-            db.removeCurrentPoll( prhandler , request , response );
+            db.removeCurrentPoll( request.body.QuestionNo ,  prhandler , request , response );
                         
         }
         else{

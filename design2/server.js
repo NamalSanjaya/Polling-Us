@@ -98,6 +98,19 @@ Admin.get( path.mySchedule , (req,res)=> {
     return ;
 })
 
+Admin.get( path.myHistory , (req,res)=> {
+   
+    if( req.session.AuthUser == 1){
+
+        retrieveMY(  2  ,  PollReader , DBadmin , req , res );
+
+    }
+
+    else{
+        redirect( res , path.home );
+    }
+    return ;
+})
 
 
 Admin.get( path.logout , (req,res)=> {
@@ -152,8 +165,39 @@ Admin.get( path.poll.editPoll , ( req , res )=> {
     }
 
     else{
+        req.session.action = 'edit' ;
+        req.session.state  = 0 ;
         DBadmin.editPage( req.query.quesNo , PollReader , req , res );
     }
+})
+
+Admin.get( path.poll.delPoll , ( req , res )=> {
+
+    if( req.session.AuthUser == 0){
+        redirect( res , path.notFnd );
+    }
+
+    else{
+        req.session.action = 'del';
+        req.session.state  = 0 ;
+        DBadmin.removeCurrentPoll( req.query.quesNo , PollHandler , req , res );
+    }
+    return ;
+})
+
+
+Admin.get( path.poll.endPoll , ( req , res )=> {
+
+    if( req.session.AuthUser == 0){
+        redirect( res , path.notFnd );
+    }
+
+    else{
+        req.session.action = 'del';
+        req.session.state  = 2 ;
+        DBadmin.removeCurrentPoll( req.query.quesNo , PollHandler , req , res );
+    }
+    return ;
 })
 
 
@@ -242,6 +286,8 @@ Admin.post( path.poll.editPoll , ( req , res ) => {
     }
 
     else{
+        req.session.action = 'edit' ;
+        req.session.state = 0 ;
         saveEditPoll( PollHandler , PollReader , DBadmin , Admin.schduleBag , req , res ) ; 
     }
 
@@ -314,15 +360,26 @@ PollHandler.on( 'done-addpoll', (err,request,response)=> {
         Admin.setForNxtPoll();
         msg = 'sucessfully created...';
     }
-   redirect( response , path.my )
+
+    if( request.session.action == 'edit'){
+
+        redirect( response , path.mySchedule );
+        return ;
+    }
+    else{
+        redirect( response , path.my ) ;
+    }
 
     return ;
 })
 
 
 PollHandler.on( 'done-expiredpoll' , ( Qno )=> {
+    let tmer = Admin.liveBag[ Qno ] ;
+    clearTimeout( tmer ) ;
     delete Admin.liveBag[ Qno ] ;
     console.log(`poll fired Over...${ Qno }`);
+    DBadmin.changeState( Qno, 2 );
     return ;
 
 })
@@ -425,8 +482,20 @@ PollReader.on('done-editSave' , (err , request , response ) => {
         return ;
     }
 
-    DBadmin.createPoll( request.body , PollHandler , request , response );
-    console.log('updatedd..');
+    else if( request.session.action == 'edit' ){
+
+        DBadmin.createPoll( request.body , PollHandler , request , response );
+    }
+
+    else if( request.session.action == 'del' ){
+
+        let _timer = Admin.schduleBag[ request.query.quesNo ] ;
+        clearTimeout( _timer );
+        delete Admin.schduleBag[ request.query.quesNo ];
+
+        redirect( response , path.mySchedule  )
+    }
+
     return ;
 })
 

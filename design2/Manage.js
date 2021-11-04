@@ -22,8 +22,8 @@ class Manager extends Router{
 
         this.liveBag = { } ;
         this.schduleBag = { } ;
-        this.quesNo = 160 ;
-        this.ansStart = 1410 ;
+        this.quesNo = 101 ;
+        this.ansStart = 1001 ;
 
     }
 
