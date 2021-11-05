@@ -10,7 +10,7 @@ const { Connection_DB }  = require('./model');
 const { register , login , render, redirect , logout , retrieveMY ,isEligible, createQueryUrl ,
     create_poll , assignBag , changeCookie, timeNow , arrangeData, pollView ,
     changeTime , expiredPoll , Id2link , beforeExtendTime , arrangeToVote , obtainVote ,
-    dataToEdit , saveEditPoll } = require('./base');
+    dataToEdit , saveEditPoll , replacer } = require('./base');
 
 
 
@@ -116,7 +116,7 @@ Admin.get( path.myHistory , (req,res)=> {
 Admin.get( path.logout , (req,res)=> {
 
     if( req.session.AuthUser == 1){
-       logout( LgHandler , DBadmin , req , res );
+       logout( LgHandler , DBadmin , Admin.encrpt  , req , res );
     }
    else{
        redirect( res , path.home );
@@ -180,7 +180,7 @@ Admin.get( path.poll.delPoll , ( req , res )=> {
     else{
         req.session.action = 'del';
         req.session.state  = 0 ;
-        DBadmin.removeCurrentPoll( req.query.quesNo , PollHandler , req , res );
+        DBadmin.removeCurrentPoll( req.query.quesNo , PollReader , req , res );
     }
     return ;
 })
@@ -195,7 +195,7 @@ Admin.get( path.poll.endPoll , ( req , res )=> {
     else{
         req.session.action = 'del';
         req.session.state  = 2 ;
-        DBadmin.removeCurrentPoll( req.query.quesNo , PollHandler , req , res );
+        DBadmin.removeCurrentPoll( req.query.quesNo , PollReader , req , res );
     }
     return ;
 })
@@ -332,7 +332,7 @@ LgHandler.on('done-login' , (err , request , response ) => {
         redirect( response, path.login);
     }
     else{
-        changeCookie( response , 1 );
+        changeCookie(request ,  response , Admin.encrpt , 1 );
         redirect( response, path.my );
     }
     return ;
@@ -473,7 +473,7 @@ PollReader.on( 'done-EditDataFetched' , (err , data , request , response )=> {
 
     let dta  = dataToEdit( data );
     
-    render( response , '../templates/HTML/createpoll.ejs' , { quesNo: dta.QuestionNo  , ansStart: dta.Answers[0].AnswerNo , editDt: JSON.stringify(dta) } );
+    render( response , '../templates/HTML/createpoll.ejs' , {quesNo: dta.QuestionNo, ansStart: dta.Answers[0].AnswerNo, editDt:JSON.stringify(dta ,replacer)} );
 })
 
 PollReader.on('done-editSave' , (err , request , response ) => {
@@ -492,7 +492,7 @@ PollReader.on('done-editSave' , (err , request , response ) => {
         let _timer = Admin.schduleBag[ request.query.quesNo ] ;
         clearTimeout( _timer );
         delete Admin.schduleBag[ request.query.quesNo ];
-
+        console.log('deleted...')
         redirect( response , path.mySchedule  )
     }
 

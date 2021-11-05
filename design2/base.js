@@ -11,8 +11,34 @@ const ejs = require('ejs');
 
 //   ================= middleware ==================== //
 
-function _extracCookie ( pattern , ind ){
+function replacer(key,value){
+    if(typeof value === 'string'){
+        let res = "";
+        for( let c of value){
 
+            let code = c.charCodeAt(0);
+            if( code == 34 || code == 39 ){
+                res += "`" ;
+            }
+
+            else if( code == 92){
+                res += "/" ; 
+            }
+        
+            else{
+                 res += c
+            }
+        }
+
+        return res ;
+        
+    }
+    return value ;
+}
+
+function _extracCookie ( pattern , ind  , encrpt){
+
+    pattern =  pattern.slice(ind,ind+10) + encrpt.decrypt( pattern.slice(ind+10) );
     let [id,Auser]  = pattern.slice( ind , ind + 30 ).split('&');
     let valId  = id.split('=')[1].trim() ;
     let valUsr = Number.parseInt( Auser.split('=')[1].trim() );
@@ -22,8 +48,7 @@ function _extracCookie ( pattern , ind ){
 } ;
 
 function _createId(){
-
-    // length 9 id
+    // length 9 id 
     let ref = new Date('2021-10-01T00:00:00')  ;
     let datePart = ( Date.now() - ref ).toString() ;
     let id1 = datePart.slice(5).padEnd( 5 , datePart[0] ) ;
@@ -32,24 +57,26 @@ function _createId(){
 
 }
 
-function _createCookie( session , mul ){
+function _createCookie( session ,mul , encrption ){
 
     let now = new Date( Date.now()  +  60000*mul );
     let time = '; Expires=' + now.toUTCString() ;
-    return 'SessionId='.concat( session.SessionId , '&AuthUser=', session.AuthUser.toString() ,time , '; Path=/' );
+    let encrptedCode =  encrption.encrypt(  session.SessionId +'&AuthUser='+ session.AuthUser.toString() );
+
+    return 'SessionId='.concat( encrptedCode  , time , '; Path=/' );
 
 }
 
 
-function session( request , response ){
+function session( request , response , options ){
 
-    let cke , ind , timeMul;
-    cke = request.headers.cookie  || '';
+    let cke , ind , timeMul, encrption = options.enc ;
+    cke = request.headers.cookie || "" ;
     ind = cke.search(/SessionId=/) ;
-  
+     
     if( ind >= 0){
         // authenticated user
-        request.session = _extracCookie( cke , ind );
+        request.session = _extracCookie( cke , ind , encrption );
         timeMul = 10 ;
     }
 
@@ -59,13 +86,12 @@ function session( request , response ){
         request.session = { SessionId , AuthUser: 0 }
         timeMul = 1 ;
     }
-
-    response.setHeader( 'Set-Cookie', [ _createCookie( request.session , timeMul ) ] ) ;
+    response.setHeader('Set-Cookie', [ _createCookie( request.session , timeMul , encrption ) ] ) ;
     return ;
 }
 
 
-function attachBody( request , option = null){
+function attachBody(request){
     let data = '' ;
 
     request.on('data' , (chunk) => {
@@ -126,7 +152,6 @@ function editORdel( ptname ){
 }
 
 function voteSeperation( request , response ){
-
     let _pathname = request.url ;
     let Ind = _pathname.search(/^\/vote/);
     let Ind2 = editORdel( _pathname ) ;
@@ -148,7 +173,7 @@ function voteSeperation( request , response ){
         else{
 
             request.voteId = request.headers.cookie.slice(0,SInd-2).trim() ;
-            request.headers.cookie = request.headers.cookie.slice(SInd,SInd+30) ;
+            request.headers.cookie = request.headers.cookie.slice(SInd,SInd+54) ;
         }
 
     }
@@ -180,7 +205,7 @@ function voteSeperation( request , response ){
     else{
         request.url = UrlObj.pathname ;
     }
-
+   
     return ;
 }
 
@@ -234,11 +259,11 @@ function login( lHandler , db , request , response ){
 }
 
 
-function logout(lHandler , db , request , response ){
+function logout(lHandler , db , encrption , request , response ){
 
     db.removeLoggedUser( request.session.SessionId , lHandler , request , response );
     response.removeHeader('Set-Cookie');
-    response.setHeader( 'Set-Cookie', [ _createCookie(  request.session , 0 ) ] ) ;
+    response.setHeader( 'Set-Cookie', [ _createCookie(request.session , 0 , encrption) ]  ) ;
     return ;
 }
 
@@ -488,12 +513,15 @@ function timeNow(){
     return Math.floor( ( Date.now() - ref.getTime() ) / 60000 ) ;
 }
 
-function changeCookie( response ,to){
-    let cookie = response.getHeader('set-cookie')[0];
+function changeCookie( request , response, encrption  , to){
+    
     response.removeHeader('Set-Cookie');
+    request.session.AuthUser  = to;
+    let timeMul = 10 * to;
 
-    response.setHeader( 'Set-Cookie', [ cookie.slice(0,29) + to + cookie.slice(30) ] );
-    return 
+    response.setHeader( 'Set-Cookie', [ _createCookie(request.session , timeMul , encrption) ] );
+    return ;
+
 }
 
 function arrangeData( arr ){
@@ -535,7 +563,7 @@ function arrangeData( arr ){
     temp.Votes = sm ;
     whole.push( temp );
 
-    return JSON.stringify( whole )
+    return JSON.stringify( whole , replacer );
 
 }
 
@@ -553,12 +581,12 @@ function arrangeToVote( array ){
 
     res.Answers = answers ;
 
-    return JSON.stringify( res );
+    return JSON.stringify( res , replacer );
 }
 
 
 module.exports = { session , attachBody  , register , login , render , redirect , timeNow ,isEligible,pollView ,
                    changeCookie , create_poll , assignBag , logout, retrieveMY , arrangeData , voteSeperation ,
                    createQueryUrl , changeTime , expiredPoll , Id2link , beforeExtendTime, arrangeToVote , obtainVote ,
-                   dataToEdit, saveEditPoll }
+                   dataToEdit, saveEditPoll , replacer }
 
