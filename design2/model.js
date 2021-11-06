@@ -42,7 +42,7 @@ class Connection_DB{
             else if(result.length ){
 
                 let msg = 'Email already exist' ;
-                rHandler.emit('done-reg' , msg , request , response );
+                rHandler.emit('done-pendReg' , msg , request , response );
                 return ;
 
             }
@@ -58,10 +58,10 @@ class Connection_DB{
 
     _updateFields( data , handler , request , response ){
         let query = `UPDATE pendingusers 
-        SET username=? , passwd=? , registeredTime=? WHERE  email = ?` ;
+        SET pendingid=?  ,username=? , passwd=? , registeredTime=? WHERE  email = ?` ;
         let now = timeNow() ;
-        this.connection.query( query , [ data[ this.reg.name ] , data[ this.reg.password ] , now , data[ this.reg.email] ] , (err,result,fields)=> {
-
+        this.connection.query( query , [ data.pendingId , data[ this.reg.name ] , data[ this.reg.password ] , now , data[ this.reg.email] ] , (err,result,fields)=> {
+            
             if(err){
                 // here system has some error --> need to fix
                 // redirect to a safe place
@@ -71,17 +71,17 @@ class Connection_DB{
 
             else{
                 console.log('update pending tb');
-                handler.emit('done-reg' , null , request , response ) ;
+                handler.emit('done-pendReg' , null , request , response ) ;
                 return ;
             }
         });
     }
 
     _addPendingUser( data , handler , request , response ){
-        let query = `insert into pendingusers values( ?,?,?,? )` ;
+        let query = `insert into pendingusers values(?,?,?,?,? )` ;
         let now = timeNow() ;
 
-        this.connection.query( query , [data[ this.reg.name ] , data[ this.reg.email ] , data[ this.reg.password ] , now ] , (err,result,fields) => {
+        this.connection.query( query ,  [ data.pendingId  , data[ this.reg.name ] , data[ this.reg.email ] , data[ this.reg.password ] , now ] , (err,result,fields) => {
 
             if( err ){
                 // here system has some error --> need to fix
@@ -91,7 +91,7 @@ class Connection_DB{
             }
 
             else{
-                handler.emit('done-reg' , null , request , response );
+                handler.emit('done-pendReg' , null , request , response );
                 console.log('insert into pending tb');
                 return ;
             }
@@ -115,7 +115,7 @@ class Connection_DB{
             else if(result.length >= 2){
 
                 let msg = 'duplicate fields are appeared' ;
-                rHandler.emit('done-reg' , msg , request , response );
+                rHandler.emit('done-pendReg' , msg , request , response );
                 return ;
             }
 
@@ -185,7 +185,7 @@ class Connection_DB{
         let query = `select Email from registeredusers where Email=? and Passwd=?`;
 
         this.connection.query( query , [ data[ this.log.email ] , data[ this.log.password ] ],  (err,result,fields)=> {
-           
+            console.log('checkCredentials : ' +  data[ this.log.password ] );
             if(err || result.length >= 2){
                 //server error - need to handle
                 console.log('!! server error-checkCredentials');
@@ -531,6 +531,69 @@ class Connection_DB{
         
         })
     }
+
+    _addRegistered( data, rHandler , request , response ){
+        let quy = `insert into registeredusers values(?,?,?)` ;
+
+        this.connection.query( quy , [ data.Username , data.Email , data.Passwd ] , (err,result, fields)=> {
+                if( err ){
+                    console.log('server error-_addRegistered| ' + err.message )
+                }
+
+                else{
+                    rHandler.emit('done-register' , null , request , response )
+                }
+                return ;
+        })
+    }
+
+    
+
+    deletePendingUser( rid , data , rHandler , request , response ){
+        let query = `delete from pendingUsers where pendingId=?`;
+
+        this.connection.query( query , [ rid ] , (err,result,fields)=> {
+            if(err){
+                console.log('server error-' + err.message )
+            }
+
+            else if( result.affectedRows == 1 ){
+                
+                this._addRegistered(data, rHandler , request , response );
+            }
+
+            else{
+                /// authorozied access
+                let msg = 'authorozied access' ;
+                rHandler.emit('done-register' , msg , request , response );
+            }
+
+            return ;
+        })
+    }
+
+    addRegisteredUser( rid , rHandler , request , response ){
+        let quey = `select * from pendingUsers where pendingId=?` ;
+
+        this.connection.query( quey , [ rid ] , (err,result,fields)=> {
+            if( err ){
+                console.log('server error-addRegisteredUser| ' + err.message );
+            }
+            else if( result.length == 1){
+                this.deletePendingUser( rid , result[0]  , rHandler , request , response );
+            }
+
+            else{
+                 /// authorozied access
+                 let msg = 'authorozied access';
+                 rHandler.emit('done-register' , msg , request , response );
+            }
+
+            return ;
+        });
+    }
+
+
 
 }
 

@@ -155,9 +155,10 @@ function voteSeperation( request , response ){
     let _pathname = request.url ;
     let Ind = _pathname.search(/^\/vote/);
     let Ind2 = editORdel( _pathname ) ;
+    let Ind3 = _pathname.search( /^\/home\/confirm/ );
     request.headers.cookie = request.headers.cookie  || '' ; 
     let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
-
+   
     if( Ind == 0 ){
     
         let _id    =   link2Id( UrlObj.searchParams.get('id') || '' ) ;
@@ -202,6 +203,31 @@ function voteSeperation( request , response ){
        
     }
 
+    else if( Ind3 == 0){
+
+        let confmId  = link2Id( UrlObj.searchParams.get('rid') || '' );
+        
+        if( confmId.length >= 3 ){
+            let num = Number.parseInt( confmId );
+            if( !isNaN(num) ){
+                request.query = { rid: num };
+                request.url = UrlObj.pathname ;
+            }
+
+            else{
+                request.query  = { rid: ''};
+                request.url = '/home/404' ;
+            }
+        }
+
+        else{
+            request.query = { rid: '' }
+            request.url = '/home/404' ;
+        }
+
+        return ;
+    }
+
     else{
         request.url = UrlObj.pathname ;
     }
@@ -236,9 +262,10 @@ function redirect( response , to , _data={}  , statusCode = 302 ){
 
 // ================= registering | login | logout =============================  //
 
-function register(  rHandler , db , request , response ){
+function register(  rHandler , db , encrption , request , response ){
 
     request.on( 'end' , ()=> {
+        request.body.Upassword  = encrption.encrypt( request.body.Upassword );
         db.checkEmail( request.body.Uemail , rHandler , request , response );
         return ;
     })
@@ -247,15 +274,15 @@ function register(  rHandler , db , request , response ){
 }
 
 
-function login( lHandler , db , request , response ){
+function login( lHandler , db , encrption  , request , response ){
 
     request.on('end' , ()=> {
+        request.body.MYpasswd = encrption.encrypt( request.body.MYpasswd );
         db.checkCredentials( request.body , lHandler , request , response );
         return ;
     })
 
     return ;
-    
 }
 
 

@@ -57,6 +57,12 @@ Admin.get( path.register , ( req , res )=> {
 
 })
 
+Admin.get( path.regConfirm , ( req , res )=> {
+   
+    DBadmin.addRegisteredUser( req.query.rid , RegHandler , req , res );
+    return ;
+})
+
 Admin.get( path.login , (req,res)=> {
 
     if( req.session.AuthUser == 0){
@@ -217,7 +223,7 @@ Admin.get( '/CSS/' , (req , res)=> {
 Admin.post( path.register , ( req , res )=> {
 
     if( req.session.AuthUser == 0){
-        register( RegHandler , DBadmin , req , res );
+        register( RegHandler , DBadmin , Admin.encrpt , req , res );
         return ;
     }
 
@@ -232,7 +238,7 @@ Admin.post( path.register , ( req , res )=> {
 Admin.post( path.login , ( req , res )=> {
 
     if( req.session.AuthUser == 0){ 
-        login( LgHandler , DBadmin , req , res ) ;
+        login( LgHandler , DBadmin , Admin.encrpt , req , res ) ;
         return ;
     }
 
@@ -297,21 +303,36 @@ Admin.post( path.poll.editPoll , ( req , res ) => {
 
 // =====================  registering event handlers ======================= //
 
-/// for server.js
-RegHandler.on( 'done-reg' , (err , request , response )=> {
+
+RegHandler.on('done-register' , (err,request, response )=> {
+
+        if(err){
+            redirect( response , path.notFnd );
+        }
+
+        else{
+        
+            redirect( response , path.logout );
+        }
+
+        return ;
+})
+
+RegHandler.on( 'done-pendReg' , (err , request , response )=> {
 
     if( err ){
         redirect( response , path.register );
     }
     else{
+        // need to send email
+        let token = Id2link( request.body.pendingId );
+        Admin.sendEmail( request.body.Uemail , token , RegHandler );
         redirect( response , path.home );
     }
     return ;
 
 }) ;
 
-
-// for base.js
 
 RegHandler.on( 'allow-reg1' , (err , request , response )=> {
 
@@ -320,8 +341,11 @@ RegHandler.on( 'allow-reg1' , (err , request , response )=> {
     }
     else{
         /// send email and add to pending uset table
+        request.body.pendingId = Admin.pendUser;
+        Admin.pendUser++ ;
         DBadmin.addPendingUser( request.body , RegHandler , request , response);
     }
+
     return ;
 })
 

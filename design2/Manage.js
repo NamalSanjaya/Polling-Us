@@ -1,6 +1,8 @@
-
+//node module
 const events = require('events');
 
+// npm dependencies
+const  nodemailer = require('nodemailer');
 
 // custom modules 
 const { Router } = require('./route');
@@ -27,6 +29,15 @@ class Manager extends Router {
         this.schduleBag = { } ;
         this.quesNo   = 120 ;
         this.ansStart = 1080 ;
+        this.pendUser = 101 ;
+
+        this.transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: 'namaltest98@gmail.com',
+              pass: 'NStest159##'
+            }
+          });
      
     }
 
@@ -61,6 +72,36 @@ class Manager extends Router {
         for( let mdw of this.mdwBag ){
             mdw[0].call( this , request , response  , mdw[1] );
         }
+    }
+
+    sendEmail( toMail , token , controller  ){
+        let confirmLink = 'http://localhost:8000/home/confirm?rid=' + token ;
+       
+        let mailOptions = {
+            from: 'namaltest98@gmail.com',
+            to: toMail,
+            subject: 'Account confirmation - Polling..',
+            html: `<h3> Account verification - Polling..</h3>  
+                   <p> verify your account by clicking the link.<br>
+                   <small> link will be expired within one hour.</small></p> 
+            
+                   <a href=${ confirmLink }> verify my account </a>
+            
+                   <p> Thanks for joining with us.</p>`
+        };
+
+        this.transporter.sendMail( mailOptions, function(err, info){
+            if (err) {
+                // server error occuried. use controller for handle server error
+                console.log(error);
+            }
+            else{
+                console.log('sent : ' + info.response );
+            }
+            return ;
+          });
+
+    return ;
     }
 }
 
