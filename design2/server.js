@@ -363,7 +363,7 @@ LgHandler.on('done-login' , (err , request , response ) => {
 })
 
 LgHandler.on('done-logout' , (err, request , response)=> {
-
+    
     redirect( response , path.home );
     return ;
 })
@@ -463,7 +463,7 @@ PollReader.on('done-validation' , (err , voteData  , request , response )=> {
 PollHandler.on('done-extended' , (err , request , response ) => {
     let msg;
     if( err ){
-        msg = 'some error occuried'
+        msg = 'some error occuried';
     }
     else{
         msg = 'time extended successfully' ;
@@ -472,18 +472,18 @@ PollHandler.on('done-extended' , (err , request , response ) => {
     return ;
 })
 
-PollHandler.on( 'done-dataExtendTime' , ( dtTime  , req , res )=> {
+PollHandler.on( 'done-dataExtendTime' , ( dtTime  , request , response )=> {
     let now = timeNow() ;
     
     if( Admin.liveBag.hasOwnProperty( dtTime.Qno )  ){
         
-        changeTime( dtTime , now , PollHandler , Admin.liveBag , DBadmin , expiredPoll  ,  req , res );
+        changeTime( dtTime , now , PollHandler , Admin.liveBag , DBadmin , expiredPoll  ,  request , response );
         return ;
     }
 
     else{
         let msg = 'could not update' ;
-        res.end(msg);
+        response.end(msg);
         return ;
     }
 })
@@ -516,7 +516,6 @@ PollReader.on('done-editSave' , (err , request , response ) => {
         let _timer = Admin.schduleBag[ request.query.quesNo ] ;
         clearTimeout( _timer );
         delete Admin.schduleBag[ request.query.quesNo ];
-        console.log('deleted...')
         redirect( response , path.mySchedule  )
     }
 

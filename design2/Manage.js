@@ -34,8 +34,8 @@ class Manager extends Router {
         this.transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-              user: 'namaltest98@gmail.com',
-              pass: 'NStest159##'
+              user: 'PollingUsApp@gmail.com',
+              pass: 'CSpolling647'
             }
           });
      
@@ -78,7 +78,7 @@ class Manager extends Router {
         let confirmLink = 'http://localhost:8000/home/confirm?rid=' + token ;
        
         let mailOptions = {
-            from: 'namaltest98@gmail.com',
+            from: 'PollingUsApp@gmail.com',
             to: toMail,
             subject: 'Account confirmation - Polling..',
             html: `<h3> Account verification - Polling..</h3>  
