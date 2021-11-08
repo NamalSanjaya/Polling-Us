@@ -11,7 +11,7 @@ class Router{
     constructor(){
 
         this.urlPattern = {
-            home:'/home' , register:'/home/register' , login:'/home/login' , my:'/my' , regConfirm: '/home/confirm'  ,
+            home:'/' , register:'/home/register' , login:'/home/login' , my:'/my' , regConfirm: '/home/confirm'  ,
             logout:'/my/logout' , createpoll:'/my/create-poll' , vote: '/vote' , voteView: '/vote/view',notFnd: '/home/404', 
             poll:{
                 timeExtend: '/my/poll/time-extend' , editPoll: '/my/poll-edit' , delPoll: '/my/poll-delete' , endPoll:'/my/poll-end'

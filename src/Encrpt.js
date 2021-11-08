@@ -4,6 +4,7 @@ const qs = require('querystring');
 class Cipher{
 
     constructor( key , salt){
+        console.log("NAME : " , key , "TYPE: " , typeof key)
         this.algorithm = 'aes-128-cbc';
         this.key       = crypto.scryptSync( key ,salt, 16);
         this.iv        = Buffer.alloc(16, 0);

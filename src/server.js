@@ -22,7 +22,7 @@ let LgHandler = Admin.LgHandler();
 let PollHandler = Admin.PollHandler() ;
 let PollReader = Admin.PollReader() ;
 let path = Admin.path() ;
-let port = process.env.PORT || 5000 ;
+let port = process.env.PORT || 8000 ;
 
 const server = http.createServer( main ).listen( port, ()=>console.log('listen...',port) );
 
@@ -528,7 +528,7 @@ PollReader.on('done-editSave' , (err , request , response ) => {
 
 function main( req , res ){
     let url = req.url ;
-    if( url == '/favicon.ico' ){ return ; }
+    if( url == '/favicon.ico' ){ return ; res.end()}
     
     Admin.Execute_MiddleWare( req , res );
     let success  = Admin.router( req , res );
