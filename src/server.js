@@ -33,7 +33,7 @@ const server = http.createServer( main ).listen( port, ()=>console.log('listen..
 /* GET request */
 Admin.get( path.home , ( req , res )=> {
 
-    render( res ,  '../templates/HTML/home.ejs'  );
+    render( res ,  './templates/HTML/home.ejs'  );
     return ;
 
 })
@@ -441,7 +441,7 @@ PollReader.on( 'done-singlePollData'  , (err , data , request , response )=> {
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/view.ejs' , { mydata: sendData , myuser:0 , state: 1 }  );
+        render( response , './templates/HTML/view.ejs' , { mydata: sendData , myuser:0 , state: 1 }  );
     }
 
     return ;
