@@ -40,14 +40,14 @@ Admin.get( path.home , ( req , res )=> {
 
 Admin.get( path.notFnd , (req , res )=> {
     // page not found error rendering 
-    render( res , '../templates/HTML/notFnd.ejs' , '' , 404 );
+    render( res , './templates/HTML/notFnd.ejs' , '' , 404 );
     return ;
 })
 
 Admin.get( path.register , ( req , res )=> {
     
     if( req.session.AuthUser == 0){
-        render( res , '../templates/HTML/register.ejs' );
+        render( res , './templates/HTML/register.ejs' );
     }
 
     else{
@@ -66,7 +66,7 @@ Admin.get( path.regConfirm , ( req , res )=> {
 Admin.get( path.login , (req,res)=> {
 
     if( req.session.AuthUser == 0){
-        render( res , '../templates/HTML/login.ejs' );    
+        render( res , './templates/HTML/login.ejs' );    
     }
 
     else{
@@ -137,7 +137,7 @@ Admin.get( path.createpoll , (req , res )=> {
 
     if( req.session.AuthUser == 1){
         
-        render( res , '../templates/HTML/createpoll.ejs' , { quesNo: Admin.quesNo , ansStart: Admin.ansStart , editDt:null } );
+        render( res , './templates/HTML/createpoll.ejs' , { quesNo: Admin.quesNo , ansStart: Admin.ansStart , editDt:null } );
     }
     else{
         redirect( res , path.home );
@@ -210,7 +210,7 @@ Admin.get( path.poll.endPoll , ( req , res )=> {
 
 Admin.get( '/CSS/' , (req , res)=> {
     
-    let fileCss = readFileSync('../templates/CSS/' + req.url ) ;
+    let fileCss = readFileSync('./templates/CSS/' + req.url ) ;
     res.writeHead( 200 , {'Content-Type':'text/css'});
     res.end( fileCss ) ;
    
@@ -428,7 +428,7 @@ PollReader.on( 'done-retrievePollData' , (err , data , _st  , request , response
     }
     else{
         let sendData = arrangeData(data) ;
-        render( response , '../templates/HTML/my.ejs' , { mydata: sendData , myuser: 1 , state: _st }  );
+        render( response , './templates/HTML/my.ejs' , { mydata: sendData , myuser: 1 , state: _st }  );
     }
 
     return ;
@@ -455,7 +455,7 @@ PollReader.on('done-validation' , (err , voteData  , request , response )=> {
 
     else{
         let sndData = arrangeToVote( voteData );
-        render(  response , '../templates/HTML/vote.ejs' , { Vdata: sndData })
+        render(  response , './templates/HTML/vote.ejs' , { Vdata: sndData })
     }
 
     return ;
@@ -498,7 +498,7 @@ PollReader.on( 'done-EditDataFetched' , (err , data , request , response )=> {
 
     let dta  = dataToEdit( data );
     
-    render( response , '../templates/HTML/createpoll.ejs' , {quesNo: dta.QuestionNo, ansStart: dta.Answers[0].AnswerNo, editDt:JSON.stringify(dta ,replacer)} );
+    render( response , './templates/HTML/createpoll.ejs' , {quesNo: dta.QuestionNo, ansStart: dta.Answers[0].AnswerNo, editDt:JSON.stringify(dta ,replacer)} );
 })
 
 PollReader.on('done-editSave' , (err , request , response ) => {
