@@ -28,14 +28,14 @@ class Connection_DB{
     }
 
     checkEmail( mail , rHandler , request , response ){
-        
+        console.log( mail )
         let query = `select Email from RegisteredUsers where Email = ?` ;
         this.connection.query( query , [ mail ] , (err,result,fields) => {
             
             if(err){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-checkEmail');
+                console.log('!! server error-checkEmail| ', err.message);
                 return ;
             }
 
@@ -65,7 +65,7 @@ class Connection_DB{
             if(err){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-__updateFields')
+                console.log('!! server error-__updateFields| ', err.message)
                 return ;
             }
 
@@ -86,7 +86,7 @@ class Connection_DB{
             if( err ){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-_addPendingUser')
+                console.log('!! server error-_addPendingUser| ', err.message)
                 return ;
             }
 
@@ -107,7 +107,7 @@ class Connection_DB{
             if( err ){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-addPendingUser')
+                console.log('!! server error-addPendingUser| ', err.message)
                 return ;
 
             }
@@ -145,7 +145,7 @@ class Connection_DB{
         this.connection.query( query , [ request.session.SessionId  , data[ this.log.email ]  , now  ] , (err,result,fields) => {
                 if(err){
                     // redirect to server error page
-                    console.log('!! server error-__addCurrentUser, ' , request.session.SessionId );
+                    console.log('!! server error-__addCurrentUser| ' , err.message );
                     return ;
                 }
 
@@ -165,7 +165,7 @@ class Connection_DB{
         this.connection.query( query , data[ this.log.email ] , (err,result,fields)=> {
 
             if( err ){
-                console.log('!! server error-_removeExistingUsers');
+                console.log('!! server error-_removeExistingUsers| ', err.message);
                 // redirect to server error page
                 return ;
             }
@@ -188,7 +188,7 @@ class Connection_DB{
             console.log('checkCredentials : ' +  data[ this.log.password ] );
             if(err || result.length >= 2){
                 //server error - need to handle
-                console.log('!! server error-checkCredentials');
+                console.log('!! server error-checkCredentials| ', err.message);
                 return;
             }
 
@@ -220,7 +220,7 @@ class Connection_DB{
             this.connection.query( query ,[ ans.AnswerNo , ans.Answer , Qno, 0] , (err,result,fields)=> {
                 if(err){
                     //server error
-                    console.log('server error-_addAnswers')
+                    console.log('server error-_addAnswers| ', err.message)
                 }
                 else{
                     cnt++ ;
@@ -329,7 +329,7 @@ class Connection_DB{
         this.connection.query( query , [ Id , state ] , (err,result , fields)=> {
             if(err){
                 //server error 
-                console.log('server error- retrievePoll');
+                console.log('server error- retrievePoll| ', err.message);
             }
             else{
                 
@@ -353,7 +353,7 @@ class Connection_DB{
         this.connection.query( query , [ Id ] , (err , result , fields )=> {
             if(err){
                 // server error - need to handle
-                console.log('server error-singlePollRetrieve');
+                console.log('server error-singlePollRetrieve| ', err.message);
                 return ;
             }
 
@@ -392,7 +392,7 @@ class Connection_DB{
         this.connection.query( qry , ansArray , (err,result,fields)=> {
             if(err){
                 // need to handle
-                console.log('server error-increase_Ans_Count');
+                console.log('server error-increase_Ans_Count| ', err.message);
                 return ;
             }
             else{
@@ -411,7 +411,7 @@ class Connection_DB{
 
             if(err){
                 //server error 
-                console.log('server error-updateTime');
+                console.log('server error-updateTime| ', err.message);
             }
 
             else{
