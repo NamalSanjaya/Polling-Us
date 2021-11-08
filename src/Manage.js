@@ -9,7 +9,6 @@ const { Router } = require('./route');
 const { Cipher }        = require('./Encrpt');
 const { voteSeperation , session , attachBody }  = require('./base')
 
-console.log( "KEY :::" , process.env.crp_poll_key );
 class Manager extends Router {
 
     constructor(){
