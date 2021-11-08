@@ -1,0 +1,251 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../CSS/createpoll.css">
+    <title> Poll Creation</title>
+</head>
+
+<body>
+
+    <% if(editDt == null) {%>
+        <%- include('base') %>
+    <%} else { %> 
+        <h1> Edit Poll</h1>
+    <% } %>
+    <div class="CrtePoll_wrapper">
+
+        <form method="post" enctype="application/x-www-form-urlencoded" id="frm">
+
+            <label for="ques" id="Lbques">Question</label>
+            <textarea name="Ques <%- quesNo %>" id="ques" cols="60" rows="3" autofocus required maxlength="300"></textarea>
+            <div id="ansGrp">
+
+                 <% let ansSecond = (ansStart + 1).toString() ; %>
+                <legend id="Lbans"> Answers </legend>
+                <input type="text" name="ans <%- ansStart %>" id="ans<%- ansStart %>" class="firstAns" required maxlength="160">
+                <input type="text" name="ans <%- ansSecond %>" id="ans<%- ansSecond %>" class="secondAns" required maxlength="160">
+ 
+            </div>
+
+            <legend id="Lbsetting">Setting</legend>
+
+            <label for="stTime" id="LbstTime">start-time</label>
+            <input type="datetime-local" name="startTime" id="stTime" required>
+
+            <label for="eTime" id="LbeTime"> end-time</label>
+            <input type="datetime-local" name="endTime" id="eTime" required>
+
+            <p id="mulChoice">multiple selections allow?</p>
+
+            <label for="yes" id="Lbyes">yes</label>
+            <input type="radio" name="multipleChoices" id="yes" value="1">
+
+            <label for="no" id="Lbno">no</label>
+            <input type="radio" name="multipleChoices" id="no" value="0" checked>
+
+            <input type="submit" value="Done" id="subBtn" title="create poll">
+
+        </form>
+
+        <button id="cancelQues" title="cancel this poll">cancel</button>
+        <button id="addAns" title="add answers">+</button>
+        <button id="rmAns" title="remove answers">-</button>
+        <div class="note">
+            <small class="note1"> note : </small>
+            <small> maxlength : Question : 300 </small>
+            <small>           : Answer   : 160 </small>
+        </div>
+    
+    </div>
+
+
+
+    <script>
+        // additional helper function
+        function nearestMin(tm){
+             return Math.floor( tm/60000 );
+        }
+
+    </script>
+ 
+    <script>
+        /// input validation
+        let stTimeNode = document.getElementById('stTime');
+        let eTimeNode  = document.getElementById('eTime');
+
+        stTimeNode.addEventListener('change' , function(){
+            let nowTime    = nearestMin( Date.now() ) ;
+            let stT = nearestMin( new Date(stTimeNode.value).getTime() ) ;
+            let etVal = eTimeNode.value ;
+
+            if( stT < nowTime ){
+                stTimeNode.value = '' ;
+                console.log('stTime is invalid - resetted');
+                return ;
+            }
+
+            if( etVal.length > 0){
+                let etT2 = nearestMin( new Date( etVal ).getTime() );
+                if( stT >= etT2 ){
+                    stTimeNode.value = '';
+                    console.log('start time should be less');
+                }
+            }
+            
+        })
+
+        eTimeNode.addEventListener('change' , function(){
+            let nowTme =  nearestMin( Date.now() );
+            let eT =   nearestMin( new Date( eTimeNode.value ).getTime() );
+            let stVal = stTimeNode.value ;
+
+            if( eT <=  nowTme ){
+                eTimeNode.value = '';
+                console.log('eTime is invalid - resetted');
+                return ;
+            }
+            if( stVal.length > 0 ){
+                let stT2 = nearestMin( new Date(stVal).getTime() );
+                if( stT2 >= eT ){
+                    eTimeNode.value = '';
+                    console.log('endtime should be greater')
+                }
+            }
+        })
+
+    </script>
+
+  <script>
+    // cancel poll creation
+    document.getElementById('cancelQues').addEventListener('click' , function() {
+        console.log('requested...')
+        let request = new XMLHttpRequest();
+        request.open('GET' , 'https://polling-us.herokuapp.com/my' , true );
+        request.send();
+
+        request.onload = function(){
+            if( request.DONE ){
+                document.write( request.responseText );
+                
+                document.location.href = 'https://polling-us.herokuapp.com/my' ;
+                document.location.pathname = "/my" ;
+              
+                document.close() ;
+    
+                console.log('replied back')
+            }
+            else{
+                console.log('something went wrong')
+            }
+        }
+
+    })
+
+    /// preventing reloading
+    window.addEventListener('beforeunload' , function(e){
+
+        if( e.target.activeElement.id != 'subBtn'  ){
+            e.preventDefault();
+            e.returnValue = "" ;
+        }
+       return ;
+    }) 
+
+
+  </script>
+
+    <script>
+
+        function addFields(_ansno , _anscnt){
+
+            let refNode  = document.getElementById('ansGrp');
+            let newinput = document.createElement('input')
+            newinput.setAttribute('type' , 'text') ; newinput.setAttribute('name','ans ' + _ansno.toString() )
+            newinput.setAttribute('id' , 'ans' + _ansno ); newinput.setAttribute('required' , "") ; 
+            newinput.setAttribute('maxlength' , 160)
+
+            // setting css property
+
+            newinput.style.gridRow =   (_anscnt+1) + '/' + (_anscnt+2) ;
+            newinput.style.gridColumn = '1/13' ;
+            newinput.style.marginBottom = '2%' ;
+            refNode.insertAdjacentElement('beforeend' , newinput );
+
+        }
+        // add , remove answer fields 
+        let ansNo  = Number.parseInt( '<%- ansStart %>' ) + 1;  // unique for answers
+        let ansCnt = 2;  // just to count the answer
+        document.getElementById('addAns').addEventListener('click' , ()=>{
+            if( ansCnt >= 8){
+                let msg = 'only up to 8 answers can be provided' ;
+                console.log( msg )
+                return 
+            }
+            ansNo++ ; ansCnt ++; 
+            console.log( ansNo , ansCnt )
+            addFields( ansNo , ansCnt );
+
+            return ;
+        })
+
+        
+        document.getElementById('rmAns').addEventListener('click' , ()=> {
+            
+            if( ansCnt > 2   && ansCnt <= 8 ){
+                let rmNode = document.getElementById('ans' + ansNo );
+                rmNode.remove() ;
+                ansNo-- ; ansCnt-- ;
+                return ;
+            }
+
+            return 
+        }) 
+ 
+    </script>
+
+    <% if( editDt ) { %>
+
+        <script>
+            function toISOTime(tm){
+                let ref = new Date('2021-10-01T00:00:00').getTime() ;
+                let ISOtime = new Date( ref + tm * 60000).toISOString() ;
+                return ISOtime.slice(0,16) ;
+            }
+            window.onload = function(){
+                let editData = JSON.parse( '<%- editDt %>' );
+                let cnt = 0 ;
+                document.getElementById('ques').value = editData.Question ;
+                document.getElementById('stTime').value  = toISOTime( editData.startTime );
+                document.getElementById('eTime').value = toISOTime( editData.endTime );
+
+                if( editData.multipleChoices == 0){
+                    document.getElementById('no').checked = true ;
+                }
+                else{
+                    document.getElementById('yes').checked = true ;
+                }
+                
+                editData.Answers.forEach( (tup)=> {
+                    cnt ++ ;
+
+                    if( cnt >= 3){
+                        ansCnt++ ; ansNo++ ;
+                        addFields(ansNo , ansCnt);
+                        document.getElementById('ans' +  ansNo).value = tup.Answer ;
+                    }
+                    else{
+                        document.getElementById('ans' + tup.AnswerNo ).value = tup.Answer ;
+                    }
+                   
+                   
+                })
+
+
+            }
+        </script>
+ 
+     <% } %>
+</body>
+</html>

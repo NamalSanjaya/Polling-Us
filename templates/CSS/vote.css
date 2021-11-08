@@ -1,0 +1,22 @@
+body{
+    margin-left: 2%;
+    background-color: #d3dcde;
+}
+
+.queans{
+    padding-left: 2%;
+    padding-bottom: 4%;
+    padding-top: 2%;
+    background-color: bisque;
+    width: 80%;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+.ansContain{
+   margin-bottom: 2%;
+}
+
+.subBtn{
+    margin-top: 1%;
+    visibility: hidden;
+}

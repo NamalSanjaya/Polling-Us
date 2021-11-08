@@ -22,9 +22,9 @@ let LgHandler = Admin.LgHandler();
 let PollHandler = Admin.PollHandler() ;
 let PollReader = Admin.PollReader() ;
 let path = Admin.path() ;
+let port = process.env.PORT || 5000 ;
 
-
-const server = http.createServer( main ).listen( 8000 , ()=>console.log('listen...') );
+const server = http.createServer( main ).listen( port, ()=>console.log('listen...',port) );
 
 
 // =======================  route - callback ================================= //

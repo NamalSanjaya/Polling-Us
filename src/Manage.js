@@ -14,7 +14,7 @@ class Manager extends Router {
 
     constructor(){
         super() ;
-        this.encrpt   = new Cipher( 'bubble48' , 'salt' );
+        this.encrpt   = new Cipher( process.env.crp_poll_key, process.env.crp_poll_val );
         this.handlers = {
             RegHandler  : new events() ,
             LgHandler   : new events() ,
@@ -34,8 +34,8 @@ class Manager extends Router {
         this.transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-              user: 'PollingUsApp@gmail.com',
-              pass: 'CSpolling647'
+              user: process.env.poll_email  ,
+              pass: process.env.poll_email_PW 
             }
           });
      
@@ -75,7 +75,7 @@ class Manager extends Router {
     }
 
     sendEmail( toMail , token , controller  ){
-        let confirmLink = 'http://localhost:8000/home/confirm?rid=' + token ;
+        let confirmLink = 'https://polling-us.herokuapp.com/home/confirm?rid=' + token ;
        
         let mailOptions = {
             from: 'PollingUsApp@gmail.com',

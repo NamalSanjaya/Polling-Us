@@ -1,0 +1,189 @@
+body{
+    background-color: #d3dcde;
+}
+
+
+.CrtePoll_wrapper{
+
+    display: grid;
+    grid-template-rows: repeat( 15 , minmax( 7%  , 40px)); 
+    grid-template-columns: repeat( 22 ,minmax( 4.5% ,40px));
+}
+
+.CrtePoll_wrapper #frm{
+
+    grid-row:1/15 ;
+    grid-column:2/22 ;
+    
+    display: grid;
+    grid-template-rows: repeat( 14 , minmax( 7%  , 40px) ); 
+    grid-template-columns: repeat( 22 , minmax( 5%  , 40px) );
+
+}
+
+#frm #Lbques{
+    grid-column: 2/5;
+    grid-row: 1;
+    margin-left: 8%;
+}
+
+#frm #ques{
+    grid-column: 2/16;
+    grid-row: 2/4;
+    resize: none;
+}
+
+#addAns , #rmAns {
+    grid-row: 5;
+    text-align: center;
+    padding: 1%;
+    font-size: larger;
+    margin-left: 15%;
+    margin-right: 15%;
+   
+}
+
+#addAns{
+    grid-column: 16/18;
+    
+}
+
+#rmAns{
+    grid-column: 18/20;
+} 
+
+.note{
+    grid-row: 13/15;
+    grid-column: 8/18;
+    text-align: center;
+    padding-top: 8%;
+}
+
+.note .note1{
+    margin-bottom: 2%;
+}
+
+#ansGrp{
+
+    grid-row: 5/14 ;
+    grid-column: 2/16 ;
+
+    display: grid;
+    grid-template-rows: repeat( 9 ,  minmax( 7.8%  , 40px) ); 
+    grid-template-columns: repeat( 14 ,minmax( 7.1%  , 40px) );
+    margin: none;
+    padding-left: 0%;
+    padding-top: 0%;
+    
+}
+
+#Lbans{
+    grid-column: 1/4;
+    grid-row: 1;
+    margin-left: 8%;
+}
+
+#subBtn{
+    grid-row: 14;
+    grid-column: 2/5;
+    height: 80%;
+
+}
+
+#subBtn:hover{ 
+    background-color:lawngreen;
+    color: black;
+
+}
+
+#cancelQues{
+    grid-row: 1;
+    grid-column: 19/22;
+    border: none;
+    border-radius: 50%;
+} 
+
+#cancelQues:hover{ 
+    background-color:red;
+    color: black;
+
+}
+
+.firstAns{
+    grid-row: 2;
+    grid-column: 1/13;
+    margin-bottom: 2%;
+}
+
+
+.secondAns{
+    grid-row: 3;
+    grid-column: 1/13;
+    margin-bottom: 2%;
+}
+
+#Lbsetting{
+    grid-row: 6;
+    grid-column: 16/18;
+    padding-top: 25%;
+    padding-left: 25%;
+    font-size: 110%;
+}
+
+#LbstTime{
+    grid-row: 7;
+    grid-column: 15/17;
+    padding-top: 22%;
+}
+
+#stTime{
+    grid-row:8 ;
+    grid-column: 15/18;
+    margin-top: 7%;
+}
+
+#LbeTime{
+    grid-row: 9;
+    grid-column: 15/17;
+    padding-top: 22%;
+}
+
+
+#eTime{
+    grid-row:10;
+    grid-column: 15/18;
+    margin-top: 7%;
+}
+
+#mulChoice{
+    grid-row: 11;
+    grid-column: 15/23;
+    margin-top: 2%;
+}
+
+#Lbyes{
+    grid-row: 12 ;
+    grid-column: 15/17 ;
+    margin-left: 50%;
+    margin-top: 10%;
+}
+#yes{
+    grid-row: 12;
+    grid-column: 15/17;
+    margin-left: 0%;
+    margin-top: 15%;
+    margin-right: 14%;
+}
+
+#Lbno{
+    grid-row: 13 ;
+    grid-column: 15/17 ;
+    margin-left: 50%;
+}
+#no{
+    grid-row: 13;
+    grid-column: 15/17;
+    margin-left: 0%;
+    margin-right: 14%;
+}
+

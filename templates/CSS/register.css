@@ -1,0 +1,114 @@
+
+body{
+    
+    background-color: #d3dcde;
+}
+
+
+.wrapperSgnUp{
+
+    display: grid;
+    grid-template-rows: repeat( 15 , minmax( 20% ,auto) ); 
+    grid-template-columns: repeat(22 , minmax( 4.5% , auto ) );
+
+}
+
+.wrapperSgnUp .SgnUpForm{
+
+    display: grid;
+    grid-template-rows: repeat( 15 , minmax( 5.5% ,auto) ); 
+    grid-template-columns: repeat( 12 , minmax( 4.5% , auto ) );
+    grid-row: 1/16;
+    grid-column: 6/18;
+    
+}
+
+.SgnUpForm #h22{
+
+    grid-row:1;
+    grid-column: 5/11 ;
+    margin: 0% 0% 0% 4%;
+
+}
+
+.SgnUpForm .SgnFm{
+
+    grid-row: 2/16;
+    grid-column:3/11 ;
+    display: grid;
+    grid-template-rows: repeat( 14 , minmax( 5.5% ,auto) ); 
+    grid-template-columns: repeat( 8 , minmax( 4.5% , auto ) );
+    
+}
+
+.SgnFm #Lb_Une{
+
+    grid-row: 2 ;
+    grid-column: 1/4;
+    margin: 0% 0% 0% 3% ;
+
+}
+
+.SgnFm #_Une{
+
+    grid-row: 3 ;
+    grid-column: 1/9;
+    margin: 0% 0% 0% 3% ;
+}
+
+.SgnFm #Lb_Uel{
+
+    grid-row: 5 ;
+    grid-column: 1/4;
+    margin: 0% 0% 0% 3% ;
+
+}
+
+.SgnFm #_Uel{
+
+    grid-row: 6 ;
+    grid-column: 1/9;
+    margin: 0% 0% 0% 3% ;
+}
+
+
+.SgnFm #Lb_Upd{
+
+    grid-row: 8 ;
+    grid-column: 1/4;
+    margin: 0% 0% 0% 3% ;
+
+}
+
+.SgnFm #_Upd{
+
+    grid-row: 9 ;
+    grid-column: 1/9;
+    margin: 0% 0% 0% 3% ;
+}
+
+.SgnFm #_Sbmt{
+    grid-row: 11;
+    grid-column: 3/7;
+    background-color: greenyellow;
+}
+
+#_Sbmt:hover{
+
+    background-color:lawngreen;
+    color: black;
+}
+
+
+.BLgn{
+
+    grid-row: 13 ;
+    grid-column: 3/8 ;
+    margin: 3% 0% 0% 2%;
+}
+
+.BHome{
+    grid-row: 14 ;
+    grid-column: 3/7 ;
+    margin: 3% 0% 0% 2%;
+}

@@ -157,7 +157,7 @@ function voteSeperation( request , response ){
     let Ind2 = editORdel( _pathname ) ;
     let Ind3 = _pathname.search( /^\/home\/confirm/ );
     request.headers.cookie = request.headers.cookie  || '' ; 
-    let UrlObj = new URL( "http://" + request.headers.host + _pathname ) ;
+    let UrlObj = new URL( "https://polling-us.herokuapp.com" + _pathname ) ;
    
     if( Ind == 0 ){
     

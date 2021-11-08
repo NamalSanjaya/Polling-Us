@@ -1,0 +1,272 @@
+
+
+    <div class="main">
+
+        <%  JSON.parse(data).forEach( (ques)=> { %> 
+           
+            <div class="sub1" id="Ques <%- ques.QuestionNo %>">
+                
+                <h3 class="quesHead"> <%= ques.Question %>  </h3> 
+
+              
+                <% if( user == 1) { %>
+                        
+                        <%- include('quickSetting' , { quesNo : ques.QuestionNo , state:st }) %>
+                      
+                <% }; %>
+                <% ques.Answers.forEach( (elem)=> { %>
+                   
+                    <p class="Ques"> <%= elem.Answer %> </p>
+                    <div class="container">
+                        <div class="skills <%- ques.QuestionNo %> <%- elem.AnswerNo %>">0%</div>
+                    </div>
+
+                <% }); %>
+
+            </div>
+
+        <% }); %> 
+
+    </div>
+
+    <% if( user == 1) {  %>
+
+        <script>
+            function shareLink(qno){
+                let salt = 1e5 ;
+                let idno = ( qno + salt).toString(16) + 'Z' + ( qno + salt).toString(8) ;
+                
+                return "https://polling-us.herokuapp.com/vote?id=" + idno ;
+            }
+
+
+            function copyLink(claName){
+                
+                let copyList = document.getElementsByClassName( claName );
+                for( let _link of copyList){
+    
+                    _link.addEventListener('click' , function(){
+                        let Qid = Number.parseInt( _link.id.slice(5) );
+    
+                        let expLink = shareLink(Qid);
+                        let type    = "text/plain" ;
+                        let blob    = new Blob( [expLink], { type } );
+                        
+                        var dataTocopy = [ new ClipboardItem( { [ type ]: blob } ) ];
+                        navigator.clipboard.write(  dataTocopy  );
+                        alert('copied...');
+                    })
+                }
+            }
+        </script>
+
+    <% } %>
+
+    <% if(user == 1 && st == 1) { %>
+
+        <script>
+
+            function nearestMin(tm){
+                return Math.floor( tm/60000 );
+           }
+
+            function timeToRef(time){
+                let _ref = new Date( '2021-10-01T00:00:00' ).getTime();
+                let _given = new Date( time ).getTime() ;
+
+                return Math.floor( ( _given - _ref )/60000 )
+            }
+
+            function setTimeRes(){
+                if( this.status == 200 ){
+                    alert( this.responseText );
+                    return ;
+                }
+                return ;
+            }
+
+            function popUp(clsName , Idf , sep ){
+
+                let quesList = document.getElementsByClassName(clsName);
+                for( let _dropdn of quesList ){
+                    let content_id = Idf + _dropdn.id.slice(sep);
+                  
+                    _dropdn.addEventListener('click' , function(){
+                        let content = document.getElementById( content_id );
+                        if( content.style.display ){
+                            content.style.display = '' ;
+                            return ;
+                        }
+                        content.style.display = 'block' ;
+                        return ;
+                    })
+                }
+            }
+
+
+        </script>
+       
+        <script>
+ 
+            // drop down menu
+            popUp( 'BtnLst' , 'drop '  , 4);
+            popUp( 'BtnLstEnd' , 'end ' , 7);
+        
+            // share link
+            copyLink('link');
+
+            // save the changes in end time
+            let saveArr = document.getElementsByClassName('BtnSave');
+            for( let _saveBtn of saveArr){
+                let myId    = _saveBtn.id.slice(5);
+
+                _saveBtn.addEventListener('click' ,    function( ){
+
+                    let newTime = document.getElementById('time ' + myId ).value || '';
+                    if(  newTime.length == 0){
+                        return 
+                    }
+                    let _now = nearestMin( Date.now() );
+                    let _gvnTm = nearestMin( new Date(newTime).getTime() );
+                    
+                    if( _gvnTm < _now ){
+                        return ;
+                    }
+
+                    let withRef = timeToRef( newTime );
+                    let data = JSON.stringify({ Qno:myId  , exdTime: withRef })
+                   
+                    let req = new XMLHttpRequest();
+                    req.onload = setTimeRes ;
+                    req.open('POST' , 'https://polling-us.herokuapp.com/my/poll/time-extend' , true);
+                    req.send(data);
+                    // close the menu
+                    document.getElementById('drop ' + myId ).style.display = '';
+                    document.getElementById('time ' + myId ).value = '' ;
+                    return ;
+
+                }); 
+            }
+           
+        </script>
+
+        <script>
+
+            let EndPoll = document.getElementsByClassName('yesnoEnd');
+
+            for( let _yesnoBtn of EndPoll){
+                let BtnId = _yesnoBtn.id ;
+                let Ind   = BtnId.search(/yes/);
+                if( Ind >= 0){
+                    _yesnoBtn.addEventListener('click' , function(){
+
+                        let mId = BtnId.slice(4);
+                        let data = JSON.stringify({ Qno:mId  , exdTime: 0 })
+                        let req = new XMLHttpRequest();
+                        req.onload = setTimeRes ;
+                        req.open('POST' , 'https://polling-us.herokuapp.com/my/poll/time-extend' , true);
+                        req.send(data);
+                        document.getElementById('end ' + mId ).style.display = '' ;
+                    }) 
+                }
+
+                else{
+
+                    _yesnoBtn.addEventListener('click' , function(){
+                        let mId = BtnId.slice(3)
+                        document.getElementById('end ' + mId ).style.display = '' ;
+                    })
+
+                } 
+            
+            }
+        </script>
+    <% } else if(user == 1 && ( st == 0 || st == 2 ) ) { %>  
+
+            <script>
+
+                function Edit_Del( clz , pt ){
+
+                    let allEdits = document.getElementsByClassName(clz);
+                    for( let btn of allEdits ){
+                        btn.addEventListener('click' , ()=> {
+                            let path =  'https://polling-us.herokuapp.com/my/' + pt + '?q=' + btn.id.slice(4);
+                            let reqEdit = new XMLHttpRequest();
+                            reqEdit.open('GET' , path , true )
+                            reqEdit.send()
+                            console.log(path);
+                            reqEdit.onload = function(){
+                                if( reqEdit.DONE ){
+                                    document.write( reqEdit.responseText );
+                                    document.location.href = path ;
+                                    
+                                }
+                                else{
+                                    console.log('went something wrong..')
+                                }
+                            }
+                            
+                        })
+                    }
+                }     
+            </script>
+
+            <% if( st == 0) { %>
+                <script> 
+                    Edit_Del('edt' , 'poll-edit' );
+                    Edit_Del('del' , 'poll-delete' );
+                </script>
+
+            <% } else if( st == 2)  { %>
+                <script> 
+                    Edit_Del('edt' , 'poll-edit' );
+                    Edit_Del('end' , 'poll-end' );
+                </script>
+
+            <% }; %>
+
+    <% }; %>
+
+    <script>
+
+        function color( qnum ){
+            let num = Math.floor( Date.now()*qnum /(60000*120) );
+            return  '#'+ num.toString(16).padEnd(6,'0').slice(0,6) ;
+        }
+       
+        function drawCanvas( qno , ansArray , total){
+         
+            ansArray.forEach( (tup)=> {
+
+                let val = tup.Ans_Count ;
+                
+                let skills = document.getElementsByClassName( `${ qno } ${ tup.AnswerNo }`)[0];
+                let percent ;
+                if( total == 0){
+                    
+                    percent = '0%';
+                }
+                else{
+                    percent =  Math.round( (val*100)/ total ) + '%'; 
+                }
+
+                skills.style.width = percent ; 
+                skills.innerText = percent ;
+                skills.style.backgroundColor = color(qno);
+               
+            });
+        
+
+            return ;
+        }
+        
+    </script>
+
+    <script>
+
+        let arr = JSON.parse( '<%- data %>' );
+        for(let each of arr){
+            let ans = each.Answers;
+            drawCanvas( each.QuestionNo , ans , each.Votes );
+        }
+    </script>

@@ -1,0 +1,33 @@
+
+   <link rel="stylesheet" href="../CSS/myBase.css">
+
+<div class="BaseContainer">
+
+    <a href="https://polling-us.herokuapp.com/my/logout" class="mainLink">LogOut</a>
+    <a href="#" class="mainLink">profile</a>
+
+     <% if(st == 1)  { %>
+             <h2 class="head"> DashBoard</h2>
+             <a href="https://polling-us.herokuapp.com/my/history" class="mainLink">history</a>
+             <a href="https://polling-us.herokuapp.com/my/schedule" class="mainLink">schdule</a>
+
+    <% } else if(st==0) { %>
+        <h2 class="head"> Schdule</h2>
+        <a href="https://polling-us.herokuapp.com/my/history" class="mainLink">history</a>
+        <a href="https://polling-us.herokuapp.com/my" class="mainLink">DashBoard</a>
+        
+    <% }else if( st == 2) { %>
+        <h2 class="head">Finished</h2>
+        <a href="https://polling-us.herokuapp.com/my/schedule" class="mainLink">schdule</a>
+        <a href="https://polling-us.herokuapp.com/my" class="mainLink">DashBoard</a>
+    <% }; %>
+
+
+    <a href="https://polling-us.herokuapp.com/my/create-poll" class="mainLink">create poll</a>
+
+    </div>
+
+</div>
+
+
+

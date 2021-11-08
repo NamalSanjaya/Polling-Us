@@ -9,11 +9,11 @@ class Connection_DB{
     constructor(){
         this.connection = mysql.createPool( {
 
-            host:'localhost',
-            user:'namal',
+            host: process.env.poll_db_host,
+            user: process.env.poll_db_user,
             port:3306,
-            password:'NSnamal159##L',
-            database:'pollappusers',
+            password: process.env.poll_db_passwd,
+            database: process.env.poll_db_name,
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0

@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../CSS/login.css">
+    <title> Login </title>
+</head>
+
+<body>
+
+    <%- include('base') %>
+    <div class="wrapperLgn">
+        
+        <div class="wrapperLgn2">
+
+        <h3 class="hd3"> Log-In </h3>
+
+        <form method="post" enctype="application/x-www-form-urlencoded" class="LgnFm">
+
+            <label for="Imail" id="LbImail" > Email </label>
+            <input type="email" name="MYmail" id="Imail" required autofocus maxlength="35">
+
+            <label for="Ipasswd" id="LbIpasswd"> Password </label>
+            <input type="password" name="MYpasswd" id="Ipasswd" required maxlength="25">
+
+            <input type="submit" id="Isubmit" value="Login">
+
+        </form>
+
+        <p class="BsgnUp"> don't have an account : <a href= "https://polling-us.herokuapp.com/home/register"> Sign Up </a> </p>
+        <p class="BHome"> Back to <a href="https://polling-us.herokuapp.com/home"> home </a> </p>
+        </div>
+
+    </div>
+
+    
+    
+</body>
+</html>

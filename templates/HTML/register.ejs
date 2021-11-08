@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../CSS/register.css">
+    <title> Registration </title>
+</head>
+
+<body>
+
+    <%- include('base') %>
+
+    <div class="wrapperSgnUp">
+
+        <div class="SgnUpForm">
+
+            <h2 id="h22"> Create-Account </h2>
+            <form method="post" enctype="application/x-www-form-urlencoded" class="SgnFm" >
+                
+                <label for="_Une" id="Lb_Une"> Username </label>
+                <input type="text" name="Uname" id="_Une" required autofocus maxlength="18">
+
+                <label for="_Uel" id="Lb_Uel"> Email </label>
+                <input type="email" name="Uemail" id="_Uel" required maxlength="35"> 
+
+                <label for="_Upd" id="Lb_Upd"> password</label>
+                <input type="password" name="Upassword" id="_Upd" required maxlength="25">
+
+                <input type="submit" id="_Sbmt" value="SignUp">
+
+            </form>
+            <p class="BLgn"> Already have an account <a href="https://polling-us.herokuapp.com/home/login">Log-in</a></p>
+            <p class="BHome"> Back to <a href="https://polling-us.herokuapp.com/home"> home </a> </p>
+        </div>
+
+    </div>
+    
+</body>
+</html>

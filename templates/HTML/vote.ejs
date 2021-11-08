@@ -1,0 +1,68 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../CSS/vote.css">
+    <title>Vote</title>
+</head>
+<body>
+
+     <h1> vote... </h1><hr>
+  
+    <% let Info = JSON.parse( Vdata ) , typ = 'radio' , toName = 'ans' %>
+    <% if( Info.multipleChoices == 1) { typ = 'checkbox' ;  }%>
+    <div class="queans">
+
+    <h3 class="quetion"> <%= Info.Question %> </h3>
+
+     <form method="post" enctype="application/x-www-form-urlencoded">
+    
+        <% for( let each of Info.Answers ) {  %>
+            <% if( Info.multipleChoices == 1 ) { toName = 'ans' + each.AnswerNo }   %>
+        <div class="ansContain">
+            <input type="<%- typ %>"  name= "<%- toName %>" id="ans <%- each.AnswerNo %>" value="<%- each.AnswerNo %>" class="ansBox">
+            <label for="ans <%- each.AnswerNo %>" id="LB <%- each.AnswerNo %>" class="answer"> <%= each.Answer %></label>
+        </div>
+        <% } %>
+
+        <input type="submit" class="subBtn" id="subBtn">
+    </form>
+   
+    </div>
+
+    <script> 
+        let BtnCnt = 0 ;
+        window.addEventListener('beforeunload' , function(e){
+
+            if( e.target.activeElement.id != 'subBtn'  ){
+                e.preventDefault();
+                e.returnValue = "" ;
+            }
+           return ;
+        }) 
+        
+        let inputFields = document.getElementsByClassName('ansBox');
+        let but = document.getElementById('subBtn');
+        for( let eachAns of inputFields){
+            eachAns.addEventListener('change' , function(){
+
+                if( eachAns.checked){
+                    if( BtnCnt == 0 ){
+                        but.style.visibility = 'visible' ;
+                    }
+                    BtnCnt++ ;
+                }
+                else if(!eachAns.checked ){
+                    BtnCnt--;
+                    if( BtnCnt == 0){
+                        but.style.visibility = 'hidden'
+                    }
+
+                }
+            })
+        }
+    </script>
+    
+</body>
+</html>

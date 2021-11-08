@@ -1,0 +1,27 @@
+
+
+.BaseContainer{
+    
+    margin-bottom: 2%;
+    padding-bottom: 5%;
+
+}
+
+.BaseContainer h2{
+    width: 30%;
+    position: absolute;
+    margin: 3% 0 2% 4%;
+    font-size: 150%;
+
+}
+
+.BaseContainer .mainLink{
+    text-decoration: none;
+    float: right;
+    color: azure;
+    background-color: black;
+    padding: 0.5%;
+    margin-right: 2px;
+    font-size: 80%;
+}
+

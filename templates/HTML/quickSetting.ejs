@@ -1,0 +1,42 @@
+
+
+<% if(state == 1) { %>
+
+  <div class="dropDn">
+    <button class="BtnLst" id="Btn <%- quesNo %>" title="Extend end time">extend</button>
+    <div class="dropLst" id="drop <%- quesNo %>">
+    
+            <input type="datetime-local" name="exdTime" id="time <%- quesNo %>" class="timeExtend"
+            title="change ending time">
+            <button class="BtnSave" title="apply the changes" id="save <%- quesNo %>">save</button>
+  
+    </div> 
+</div>
+
+<button class="link" title="copy shareable link" id="link <%- quesNo %>" >copy link</button>
+
+<div class="dropEnd">
+  <button class="BtnLstEnd" id="BtnEnd <%- quesNo %>" title="finish poll">end</button>
+  <div class="EndLst" id="end <%- quesNo %>">
+       <small>Are you sure?</small>
+       <button class="yesnoEnd" id="yes <%- quesNo %>" >yes</button>
+       <button class="yesnoEnd" id="no <%- quesNo %>">no&nbsp;&nbsp;</button>
+  </div>
+</div>
+
+<% } else if( state == 0) { %>
+
+  <div class="schd">
+
+    <a href="" id="edt <%- quesNo %>" class="edt"> edit </a>
+    <a href="" id="del <%- quesNo %>" class="del">delete</a>
+
+  </div>
+
+<% } else if( state == 2) { %>
+
+  <div class="schd">
+    <a href="" id="del <%- quesNo %>" class="end">delete</a>
+  </div>
+
+  <% } %>
