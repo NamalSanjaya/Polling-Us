@@ -14,7 +14,6 @@ class Connection_DB{
             port:3306,
             password: process.env.poll_db_passwd,
             database: process.env.poll_db_name,
-            acquireTimeout:  30000,
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0
@@ -36,7 +35,7 @@ class Connection_DB{
             if(err){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-checkEmail| ', err.message);
+                console.log('!! server error-checkEmail| ', err );
                 return ;
             }
 
@@ -186,7 +185,7 @@ class Connection_DB{
         let query = `select Email from RegisteredUsers where Email=? and Passwd=?`;
 
         this.connection.query( query , [ data[ this.log.email ] , data[ this.log.password ] ],  (err,result,fields)=> {
-            console.log('checkCredentials : ' +  data[ this.log.password ] );
+
             if(err || result.length >= 2){
                 //server error - need to handle
                 console.log('!! server error-checkCredentials| ', err.message);
