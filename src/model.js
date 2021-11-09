@@ -9,7 +9,7 @@ class Connection_DB{
     constructor(){
         this.connection = mysql.createPool( {
 
-            host: process.env.DATABASE_URL,
+            host: process.env.poll_db_host,
             user: process.env.poll_db_user,
             port:3306,
             password: process.env.poll_db_passwd,
@@ -188,7 +188,7 @@ class Connection_DB{
 
             if(err || result.length >= 2){
                 //server error - need to handle
-                console.log('!! server error-checkCredentials| ', err.message);
+                console.log('!! server error-checkCredentials| ', err );
                 return;
             }
 
