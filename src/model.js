@@ -9,7 +9,7 @@ class Connection_DB{
     constructor(){
         this.connection = mysql.createPool( {
 
-            host: process.env.poll_db_host,
+            host: process.env.DATABASE_URL,
             user: process.env.poll_db_user,
             port:3306,
             password: process.env.poll_db_passwd,
@@ -35,7 +35,7 @@ class Connection_DB{
             if(err){
                 // here system has some error --> need to fix
                 // redirect to a safe place
-                console.log('!! server error-checkEmail| ', err );
+                console.log('!! server error-checkEmail| ', err);
                 return ;
             }
 
