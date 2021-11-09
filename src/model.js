@@ -14,6 +14,7 @@ class Connection_DB{
             port:3306,
             password: process.env.poll_db_passwd,
             database: process.env.poll_db_name,
+            acquireTimeout:  30000,
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0
@@ -28,8 +29,8 @@ class Connection_DB{
     }
 
     checkEmail( mail , rHandler , request , response ){
-        console.log( mail )
-        let query = `select Email from RegisteredUsers where Email = ?` ;
+  
+        let query = `select Email from RegisteredUsers where Email=?` ;
         this.connection.query( query , [ mail ] , (err,result,fields) => {
             
             if(err){
